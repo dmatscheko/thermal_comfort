@@ -1,4 +1,4 @@
-"""template conftest."""
+"""Configuration for Thermal Comfort integration tests."""
 
 import pytest
 from pytest_homeassistant_custom_component.common import assert_setup_component, async_mock_service

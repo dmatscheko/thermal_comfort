@@ -1,4 +1,4 @@
-"""The test for the Thermal Comfort sensor platform."""
+"""Test the Thermal Comfort sensor platform."""
 
 from collections.abc import Callable
 import logging

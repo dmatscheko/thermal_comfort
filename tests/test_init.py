@@ -1,4 +1,4 @@
-"""Test setup process."""
+"""Test the Thermal Comfort integration setup process."""
 
 from unittest.mock import AsyncMock, patch
 

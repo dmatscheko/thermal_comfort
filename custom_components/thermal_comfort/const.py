@@ -1,4 +1,4 @@
-"""General thermal_comfort constants."""
+"""Constants for the Thermal Comfort integration."""
 
 from homeassistant.const import Platform
 

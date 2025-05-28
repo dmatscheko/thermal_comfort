@@ -1,4 +1,4 @@
-"""Test integration_blueprint config flow."""
+"""Test Thermal Comfort config flow."""
 
 import json
 from unittest.mock import MagicMock, patch

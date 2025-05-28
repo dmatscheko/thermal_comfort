@@ -1,4 +1,4 @@
-"""Tests for config flows."""
+"""Config flow for Thermal Comfort integration."""
 
 from __future__ import annotations
 

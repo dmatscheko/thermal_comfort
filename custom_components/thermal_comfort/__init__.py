@@ -1,8 +1,4 @@
-"""Custom integration to integrate thermal_comfort with Home Assistant.
-
-For more details about this integration, please refer to
-https://github.com/dolezsa/thermal_comfort
-"""
+"""Integration for Thermal Comfort with Home Assistant."""
 
 from __future__ import annotations
 

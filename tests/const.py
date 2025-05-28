@@ -1,4 +1,4 @@
-"""General test constants."""
+"""Constants for Thermal Comfort integration tests."""
 
 from custom_components.thermal_comfort.const import CONF_HUMIDITY_SENSOR, CONF_POLL, CONF_TEMPERATURE_SENSOR
 from custom_components.thermal_comfort.sensor import CONF_CUSTOM_ICONS, CONF_ENABLED_SENSORS, CONF_SCAN_INTERVAL

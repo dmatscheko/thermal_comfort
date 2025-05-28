@@ -1,4 +1,4 @@
-"""Sensor platform for thermal_comfort."""
+"""Sensor platform for Thermal Comfort integration."""
 
 from asyncio import Lock
 from dataclasses import dataclass
