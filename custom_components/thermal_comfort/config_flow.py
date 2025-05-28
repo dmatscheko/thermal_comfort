@@ -331,14 +331,14 @@ def get_value(config_entry: config_entries.ConfigEntry | None, param: str, defau
 
 
 def build_schema(
-    config_entry: config_entries | None,
+    config_entry: config_entries.ConfigEntry | None,
     hass: HomeAssistant,
     show_advanced: bool = False,
     step: str = "user",
 ) -> vol.Schema:
     """Build configuration schema.
 
-    :param config_entry: config entry for getting current parameters on None
+    :param config_entry: config entry for getting current parameters or None
     :param hass: Home Assistant instance
     :param show_advanced: bool: should we show advanced options?
     :param step: for which step we should build schema
