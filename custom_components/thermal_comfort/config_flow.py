@@ -1,4 +1,5 @@
 """Tests for config flows."""
+
 from __future__ import annotations
 
 import logging
@@ -38,26 +39,20 @@ def get_sensors_by_device_class(
 ) -> list:
     """Get sensors of required class from entity registry."""
 
-    def filter_by_device_class(
-        _state: State, _list: list[SensorDeviceClass], should_be_in: bool = True
-    ) -> bool:
+    def filter_by_device_class(_state: State, _list: list[SensorDeviceClass], should_be_in: bool = True) -> bool:
         """Filter state objects by device class.
 
         :param _state: state object for examination
         :param _list: list of device classes
         :param should_be_in: should the object's device_class be in the list to pass the filter or not
         """
-        collected_device_class = _state.attributes.get(
-            "device_class", _state.attributes.get("original_device_class")
-        )
+        collected_device_class = _state.attributes.get("device_class", _state.attributes.get("original_device_class"))
         # XNOR
         return not ((collected_device_class in _list) ^ should_be_in)
 
     def filter_for_device_class_sensor(state: State) -> bool:
         """Filter states by Platform.SENSOR and required device class."""
-        return state.domain == Platform.SENSOR and filter_by_device_class(
-            state, [device_class], should_be_in=True
-        )
+        return state.domain == Platform.SENSOR and filter_by_device_class(state, [device_class], should_be_in=True)
 
     def filter_useless_device_class(state: State) -> bool:
         """Filter out states with useless for us device class."""
@@ -90,9 +85,7 @@ def get_sensors_by_device_class(
             SensorDeviceClass.VOLTAGE,
         ]
         """We are sure that this device classes could not be useful as data source in any case"""
-        return filter_by_device_class(
-            state, device_class_for_exclude, should_be_in=False
-        )
+        return filter_by_device_class(state, device_class_for_exclude, should_be_in=False)
 
     def filter_useless_domain(state: State) -> bool:
         """Filter states with useless for us domains."""
@@ -276,9 +269,7 @@ def get_sensors_by_device_class(
         }
         units_for_exclude += additional_units.get(device_class, [])
 
-        unit_of_measurement = state.attributes.get(
-            "unit_of_measurement", state.attributes.get("native_unit_of_measurement")
-        )
+        unit_of_measurement = state.attributes.get("unit_of_measurement", state.attributes.get("native_unit_of_measurement"))
         return unit_of_measurement not in units_for_exclude
 
     def filter_thermal_comfort_ids(entity_id: str) -> bool:
@@ -325,9 +316,7 @@ def get_sensors_by_device_class(
     return result
 
 
-def get_value(
-    config_entry: config_entries.ConfigEntry | None, param: str, default=None
-):
+def get_value(config_entry: config_entries.ConfigEntry | None, param: str, default=None):
     """Get current value for configuration parameter.
 
     :param config_entry: config_entries|None: config entry from Flow
@@ -356,26 +345,18 @@ def build_schema(
     :return: Configuration schema with default parameters
     """
     registry = er.async_get(hass)
-    humidity_sensors = get_sensors_by_device_class(
-        registry, hass, SensorDeviceClass.HUMIDITY, show_advanced
-    )
-    temperature_sensors = get_sensors_by_device_class(
-        registry, hass, SensorDeviceClass.TEMPERATURE, show_advanced
-    )
+    humidity_sensors = get_sensors_by_device_class(registry, hass, SensorDeviceClass.HUMIDITY, show_advanced)
+    temperature_sensors = get_sensors_by_device_class(registry, hass, SensorDeviceClass.TEMPERATURE, show_advanced)
 
     if not temperature_sensors or not humidity_sensors:
         return None
 
     schema = vol.Schema(
         {
-            vol.Required(
-                CONF_NAME, default=get_value(config_entry, CONF_NAME, DEFAULT_NAME)
-            ): str,
+            vol.Required(CONF_NAME, default=get_value(config_entry, CONF_NAME, DEFAULT_NAME)): str,
             vol.Required(
                 CONF_TEMPERATURE_SENSOR,
-                default=get_value(
-                    config_entry, CONF_TEMPERATURE_SENSOR, temperature_sensors[0]
-                ),
+                default=get_value(config_entry, CONF_TEMPERATURE_SENSOR, temperature_sensors[0]),
             ): selector(
                 {
                     "entity": {
@@ -385,9 +366,7 @@ def build_schema(
             ),
             vol.Required(
                 CONF_HUMIDITY_SENSOR,
-                default=get_value(
-                    config_entry, CONF_HUMIDITY_SENSOR, humidity_sensors[0]
-                ),
+                default=get_value(config_entry, CONF_HUMIDITY_SENSOR, humidity_sensors[0]),
             ): selector(
                 {
                     "entity": {
@@ -400,14 +379,10 @@ def build_schema(
     if show_advanced:
         schema = schema.extend(
             {
-                vol.Optional(
-                    CONF_POLL, default=get_value(config_entry, CONF_POLL, POLL_DEFAULT)
-                ): bool,
+                vol.Optional(CONF_POLL, default=get_value(config_entry, CONF_POLL, POLL_DEFAULT)): bool,
                 vol.Optional(
                     CONF_SCAN_INTERVAL,
-                    default=get_value(
-                        config_entry, CONF_SCAN_INTERVAL, SCAN_INTERVAL_DEFAULT
-                    ),
+                    default=get_value(config_entry, CONF_SCAN_INTERVAL, SCAN_INTERVAL_DEFAULT),
                 ): vol.All(vol.Coerce(int), vol.Range(min=1)),
                 vol.Optional(
                     CONF_CUSTOM_ICONS,
@@ -421,12 +396,7 @@ def build_schema(
                     vol.Optional(
                         CONF_ENABLED_SENSORS,
                         default=list(SensorType),
-                    ): cv.multi_select(
-                        {
-                            sensor_type: sensor_type.to_name()
-                            for sensor_type in SensorType
-                        }
-                    ),
+                    ): cv.multi_select({sensor_type: sensor_type.to_name() for sensor_type in SensorType}),
                 }
             )
 

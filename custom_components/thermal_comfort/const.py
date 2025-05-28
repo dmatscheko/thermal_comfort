@@ -1,4 +1,5 @@
 """General thermal_comfort constants."""
+
 from homeassistant.const import Platform
 
 DOMAIN = "thermal_comfort"

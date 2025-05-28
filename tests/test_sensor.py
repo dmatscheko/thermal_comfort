@@ -163,45 +163,30 @@ async def test_humidex(hass, start_ha):
 async def test_humidex_perception(hass, start_ha):
     """Test if humidex perception is calculated correctly."""
     assert get_sensor(hass, SensorType.HUMIDEX_PERCEPTION) is not None
-    assert (
-        get_sensor(hass, SensorType.HUMIDEX_PERCEPTION).state
-        == HumidexPerception.COMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.HUMIDEX_PERCEPTION).state == HumidexPerception.COMFORTABLE
 
     hass.states.async_set("sensor.test_temperature_sensor", "26.1")
     hass.states.async_set("sensor.test_humidity_sensor", "50.03")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.HUMIDEX).state == "30.0035339225107"
-    assert (
-        get_sensor(hass, SensorType.HUMIDEX_PERCEPTION).state
-        == HumidexPerception.NOTICABLE_DISCOMFORT
-    )
+    assert get_sensor(hass, SensorType.HUMIDEX_PERCEPTION).state == HumidexPerception.NOTICABLE_DISCOMFORT
 
     hass.states.async_set("sensor.test_temperature_sensor", "29.06")
     hass.states.async_set("sensor.test_humidity_sensor", "51.0")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.HUMIDEX).state == "35.0014998241678"
-    assert (
-        get_sensor(hass, SensorType.HUMIDEX_PERCEPTION).state
-        == HumidexPerception.EVIDENT_DISCOMFORT
-    )
+    assert get_sensor(hass, SensorType.HUMIDEX_PERCEPTION).state == HumidexPerception.EVIDENT_DISCOMFORT
 
     hass.states.async_set("sensor.test_temperature_sensor", "34.67")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.HUMIDEX).state == "45.0017649028272"
-    assert (
-        get_sensor(hass, SensorType.HUMIDEX_PERCEPTION).state
-        == HumidexPerception.DANGEROUS_DISCOMFORT
-    )
+    assert get_sensor(hass, SensorType.HUMIDEX_PERCEPTION).state == HumidexPerception.DANGEROUS_DISCOMFORT
 
     hass.states.async_set("sensor.test_temperature_sensor", "35.95")
     hass.states.async_set("sensor.test_humidity_sensor", "70")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.HUMIDEX).state == "54.0070687092117"
-    assert (
-        get_sensor(hass, SensorType.HUMIDEX_PERCEPTION).state
-        == HumidexPerception.HEAT_STROKE
-    )
+    assert get_sensor(hass, SensorType.HUMIDEX_PERCEPTION).state == HumidexPerception.HEAT_STROKE
 
 
 @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
@@ -226,72 +211,48 @@ async def test_dew_point_perception(hass, start_ha):
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION) is not None
     assert get_sensor(hass, SensorType.DEW_POINT).state == "9.98817292919442"
-    assert (
-        get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state
-        == DewPointPerception.DRY
-    )
+    assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state == DewPointPerception.DRY
 
     hass.states.async_set("sensor.test_temperature_sensor", "24.0")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.DEW_POINT).state == "12.9570044368822"
-    assert (
-        get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state
-        == DewPointPerception.VERY_COMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state == DewPointPerception.VERY_COMFORTABLE
 
     hass.states.async_set("sensor.test_humidity_sensor", "60.83")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.DEW_POINT).state == "15.9907471577538"
-    assert (
-        get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state
-        == DewPointPerception.COMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state == DewPointPerception.COMFORTABLE
 
     hass.states.async_set("sensor.test_temperature_sensor", "24.01")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.DEW_POINT).state == "16.0001522929822"
-    assert (
-        get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state
-        == DewPointPerception.OK_BUT_HUMID
-    )
+    assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state == DewPointPerception.OK_BUT_HUMID
 
     hass.states.async_set("sensor.test_humidity_sensor", "69.05")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.DEW_POINT).state == "18.0002749607952"
-    assert (
-        get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state
-        == DewPointPerception.SOMEWHAT_UNCOMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state == DewPointPerception.SOMEWHAT_UNCOMFORTABLE
 
     hass.states.async_set("sensor.test_humidity_sensor", "79.6")
     await hass.async_block_till_done()
     hass.states.async_set("sensor.test_temperature_sensor", "26.00")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.DEW_POINT).state == "22.2150631359531"
-    assert (
-        get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state
-        == DewPointPerception.QUITE_UNCOMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state == DewPointPerception.QUITE_UNCOMFORTABLE
 
     hass.states.async_set("sensor.test_humidity_sensor", "85.0")
     await hass.async_block_till_done()
     hass.states.async_set("sensor.test_temperature_sensor", "26.85")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.DEW_POINT).state == "24.1299575993527"
-    assert (
-        get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state
-        == DewPointPerception.EXTREMELY_UNCOMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state == DewPointPerception.EXTREMELY_UNCOMFORTABLE
 
     hass.states.async_set("sensor.test_humidity_sensor", "95.0")
     await hass.async_block_till_done()
     hass.states.async_set("sensor.test_temperature_sensor", "26.856")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.DEW_POINT).state == "26.0021323711165"
-    assert (
-        get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state
-        == DewPointPerception.SEVERELY_HIGH
-    )
+    assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).state == DewPointPerception.SEVERELY_HIGH
 
 
 @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
@@ -314,37 +275,25 @@ async def test_frost_risk(hass, start_ha):
     """Test if frost risk is calculated correctly."""
     assert get_sensor(hass, SensorType.FROST_RISK) is not None
     assert get_sensor(hass, SensorType.FROST_RISK).state == FrostRisk.NONE
-    assert (
-        get_sensor(hass, SensorType.FROST_RISK).attributes[ATTR_FROST_POINT]
-        == 10.421850849560201
-    )
+    assert get_sensor(hass, SensorType.FROST_RISK).attributes[ATTR_FROST_POINT] == 10.421850849560201
 
     hass.states.async_set("sensor.test_temperature_sensor", "0")
     hass.states.async_set("sensor.test_humidity_sensor", "57.7")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.FROST_RISK).state == FrostRisk.LOW
-    assert (
-        get_sensor(hass, SensorType.FROST_RISK).attributes[ATTR_FROST_POINT]
-        == -7.346077951913912
-    )
+    assert get_sensor(hass, SensorType.FROST_RISK).attributes[ATTR_FROST_POINT] == -7.346077951913912
 
     hass.states.async_set("sensor.test_temperature_sensor", "4.0")
     hass.states.async_set("sensor.test_humidity_sensor", "80.65")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.FROST_RISK).state == FrostRisk.MEDIUM
-    assert (
-        get_sensor(hass, SensorType.FROST_RISK).attributes[ATTR_FROST_POINT]
-        == 0.4945717077964673
-    )
+    assert get_sensor(hass, SensorType.FROST_RISK).attributes[ATTR_FROST_POINT] == 0.4945717077964673
 
     hass.states.async_set("sensor.test_temperature_sensor", "1.0")
     hass.states.async_set("sensor.test_humidity_sensor", "90.00")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.FROST_RISK).state == FrostRisk.HIGH
-    assert (
-        get_sensor(hass, SensorType.FROST_RISK).attributes[ATTR_FROST_POINT]
-        == -0.5732593367861227
-    )
+    assert get_sensor(hass, SensorType.FROST_RISK).attributes[ATTR_FROST_POINT] == -0.5732593367861227
 
 
 @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
@@ -371,82 +320,55 @@ async def test_summer_simmer_perception(hass, start_ha):
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION) is not None
     assert get_sensor(hass, SensorType.SUMMER_SIMMER_INDEX).state == "23.530335"
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state
-        == SummerSimmerPerception.SLIGHTLY_COOL
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state == SummerSimmerPerception.SLIGHTLY_COOL
 
     hass.states.async_set("sensor.test_temperature_sensor", "24.0")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.SUMMER_SIMMER_INDEX).state == "28.167"
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state
-        == SummerSimmerPerception.COMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state == SummerSimmerPerception.COMFORTABLE
 
     hass.states.async_set("sensor.test_humidity_sensor", "60.82")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.SUMMER_SIMMER_INDEX).state == "29.2929292"
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state
-        == SummerSimmerPerception.SLIGHTLY_WARM
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state == SummerSimmerPerception.SLIGHTLY_WARM
 
     hass.states.async_set("sensor.test_temperature_sensor", "24.01")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.SUMMER_SIMMER_INDEX).state == "29.308462498"
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state
-        == SummerSimmerPerception.SLIGHTLY_WARM
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state == SummerSimmerPerception.SLIGHTLY_WARM
 
     hass.states.async_set("sensor.test_humidity_sensor", "69.03")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.SUMMER_SIMMER_INDEX).state == "30.163689167"
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state
-        == SummerSimmerPerception.SLIGHTLY_WARM
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state == SummerSimmerPerception.SLIGHTLY_WARM
 
     hass.states.async_set("sensor.test_humidity_sensor", "79.6")
     await hass.async_block_till_done()
     hass.states.async_set("sensor.test_temperature_sensor", "26.0")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.SUMMER_SIMMER_INDEX).state == "34.762864"
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state
-        == SummerSimmerPerception.INCREASING_DISCOMFORT
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state == SummerSimmerPerception.INCREASING_DISCOMFORT
 
     hass.states.async_set("sensor.test_humidity_sensor", "85.0")
     await hass.async_block_till_done()
     hass.states.async_set("sensor.test_temperature_sensor", "26.85")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.SUMMER_SIMMER_INDEX).state == "36.9865525"
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state
-        == SummerSimmerPerception.INCREASING_DISCOMFORT
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state == SummerSimmerPerception.INCREASING_DISCOMFORT
 
     hass.states.async_set("sensor.test_humidity_sensor", "80.0")
     await hass.async_block_till_done()
     hass.states.async_set("sensor.test_temperature_sensor", "29.0")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.SUMMER_SIMMER_INDEX).state == "40.0998"
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state
-        == SummerSimmerPerception.EXTREMELY_WARM
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state == SummerSimmerPerception.EXTREMELY_WARM
 
     hass.states.async_set("sensor.test_humidity_sensor", "45.0")
     await hass.async_block_till_done()
     hass.states.async_set("sensor.test_temperature_sensor", "40.0")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.SUMMER_SIMMER_INDEX).state == "49.7435"
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state
-        == SummerSimmerPerception.DANGER_OF_HEATSTROKE
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SIMMER_PERCEPTION).state == SummerSimmerPerception.DANGER_OF_HEATSTROKE
 
 
 @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
@@ -466,373 +388,171 @@ async def test_moist_air_enthalpy(hass, start_ha):
 async def test_relative_strain_perception(hass, start_ha):
     """Test if relative strain perception is calculated correctly."""
     assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION) is not None
-    assert (
-        get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).attributes[
-            ATTR_RELATIVE_STRAIN_INDEX
-        ]
-        == 0.09
-    )
-    assert (
-        get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).state
-        == RelativeStrainPerception.OUTSIDE_CALCULABLE_RANGE
-    )
+    assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).attributes[ATTR_RELATIVE_STRAIN_INDEX] == 0.09
+    assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).state == RelativeStrainPerception.OUTSIDE_CALCULABLE_RANGE
 
     hass.states.async_set("sensor.test_temperature_sensor", "35.01")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION) is not None
-    assert (
-        get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).attributes[
-            ATTR_RELATIVE_STRAIN_INDEX
-        ]
-        == 0.47
-    )
-    assert (
-        get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).state
-        == RelativeStrainPerception.OUTSIDE_CALCULABLE_RANGE
-    )
+    assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).attributes[ATTR_RELATIVE_STRAIN_INDEX] == 0.47
+    assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).state == RelativeStrainPerception.OUTSIDE_CALCULABLE_RANGE
 
     hass.states.async_set("sensor.test_temperature_sensor", "26.00")
     hass.states.async_set("sensor.test_humidity_sensor", "70.00")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).attributes[
-            ATTR_RELATIVE_STRAIN_INDEX
-        ]
-        == 0.14
-    )
-    assert (
-        get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).state
-        == RelativeStrainPerception.COMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).attributes[ATTR_RELATIVE_STRAIN_INDEX] == 0.14
+    assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).state == RelativeStrainPerception.COMFORTABLE
 
     hass.states.async_set("sensor.test_temperature_sensor", "27.00")
     hass.states.async_set("sensor.test_humidity_sensor", "50.00")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).attributes[
-            ATTR_RELATIVE_STRAIN_INDEX
-        ]
-        == 0.15
-    )
-    assert (
-        get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).state
-        == RelativeStrainPerception.SLIGHT_DISCOMFORT
-    )
+    assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).attributes[ATTR_RELATIVE_STRAIN_INDEX] == 0.15
+    assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).state == RelativeStrainPerception.SLIGHT_DISCOMFORT
 
     hass.states.async_set("sensor.test_temperature_sensor", "31.00")
     hass.states.async_set("sensor.test_humidity_sensor", "38.40")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).attributes[
-            ATTR_RELATIVE_STRAIN_INDEX
-        ]
-        == 0.25
-    )
-    assert (
-        get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).state
-        == RelativeStrainPerception.DISCOMFORT
-    )
+    assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).attributes[ATTR_RELATIVE_STRAIN_INDEX] == 0.25
+    assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).state == RelativeStrainPerception.DISCOMFORT
 
     hass.states.async_set("sensor.test_temperature_sensor", "32.00")
     hass.states.async_set("sensor.test_humidity_sensor", "56.00")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).attributes[
-            ATTR_RELATIVE_STRAIN_INDEX
-        ]
-        == 0.35
-    )
-    assert (
-        get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).state
-        == RelativeStrainPerception.SIGNIFICANT_DISCOMFORT
-    )
+    assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).attributes[ATTR_RELATIVE_STRAIN_INDEX] == 0.35
+    assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).state == RelativeStrainPerception.SIGNIFICANT_DISCOMFORT
 
     hass.states.async_set("sensor.test_temperature_sensor", "31.50")
     hass.states.async_set("sensor.test_humidity_sensor", "75.00")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).attributes[
-            ATTR_RELATIVE_STRAIN_INDEX
-        ]
-        == 0.45
-    )
-    assert (
-        get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).state
-        == RelativeStrainPerception.EXTREME_DISCOMFORT
-    )
+    assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).attributes[ATTR_RELATIVE_STRAIN_INDEX] == 0.45
+    assert get_sensor(hass, SensorType.RELATIVE_STRAIN_PERCEPTION).state == RelativeStrainPerception.EXTREME_DISCOMFORT
 
 
 @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
 async def test_summer_scharlau_perception(hass, start_ha):
     """Test if summer scharlau perception is calculated correctly."""
     assert get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION) is not None
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).attributes[
-            ATTR_SUMMER_SCHARLAU_INDEX
-        ]
-        == 3.13
-    )
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.COMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).attributes[ATTR_SUMMER_SCHARLAU_INDEX] == 3.13
+    assert get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state == ScharlauPerception.COMFORTABLE
 
     hass.states.async_set("sensor.test_temperature_sensor", "36.291")
     hass.states.async_set("sensor.test_humidity_sensor", "31.00")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).attributes[
-            ATTR_SUMMER_SCHARLAU_INDEX
-        ]
-        == 0
-    )
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.COMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).attributes[ATTR_SUMMER_SCHARLAU_INDEX] == 0
+    assert get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state == ScharlauPerception.COMFORTABLE
 
     hass.states.async_set("sensor.test_temperature_sensor", "36.31")
     hass.states.async_set("sensor.test_humidity_sensor", "31.00")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).attributes[
-            ATTR_SUMMER_SCHARLAU_INDEX
-        ]
-        == -0.01
-    )
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.SLIGHTLY_UNCOMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).attributes[ATTR_SUMMER_SCHARLAU_INDEX] == -0.01
+    assert get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state == ScharlauPerception.SLIGHTLY_UNCOMFORTABLE
 
     hass.states.async_set("sensor.test_temperature_sensor", "36.23")
     hass.states.async_set("sensor.test_humidity_sensor", "33.00")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).attributes[
-            ATTR_SUMMER_SCHARLAU_INDEX
-        ]
-        == -1.0
-    )
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.MODERATELY_UNCOMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).attributes[ATTR_SUMMER_SCHARLAU_INDEX] == -1.0
+    assert get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state == ScharlauPerception.MODERATELY_UNCOMFORTABLE
 
     hass.states.async_set("sensor.test_temperature_sensor", "35.82")
     hass.states.async_set("sensor.test_humidity_sensor", "38.00")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).attributes[
-            ATTR_SUMMER_SCHARLAU_INDEX
-        ]
-        == -3.0
-    )
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.HIGHLY_UNCOMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).attributes[ATTR_SUMMER_SCHARLAU_INDEX] == -3.0
+    assert get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state == ScharlauPerception.HIGHLY_UNCOMFORTABLE
 
     hass.states.async_set("sensor.test_temperature_sensor", "39.01")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.OUTSIDE_CALCULABLE_RANGE
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state == ScharlauPerception.OUTSIDE_CALCULABLE_RANGE
 
     hass.states.async_set("sensor.test_temperature_sensor", "15.99")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.OUTSIDE_CALCULABLE_RANGE
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state == ScharlauPerception.OUTSIDE_CALCULABLE_RANGE
 
     hass.states.async_set("sensor.test_temperature_sensor", "30.00")
     hass.states.async_set("sensor.test_humidity_sensor", "29.99")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.OUTSIDE_CALCULABLE_RANGE
-    )
+    assert get_sensor(hass, SensorType.SUMMER_SCHARLAU_PERCEPTION).state == ScharlauPerception.OUTSIDE_CALCULABLE_RANGE
 
 
 @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
 async def test_winter_scharlau_perception(hass, start_ha):
     """Test if winter scharlau perception is calculated correctly."""
     assert get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION) is not None
-    assert (
-        get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).attributes[
-            ATTR_WINTER_SCHARLAU_INDEX
-        ]
-        == 25.21
-    )
-    assert (
-        get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.OUTSIDE_CALCULABLE_RANGE
-    )
+    assert get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).attributes[ATTR_WINTER_SCHARLAU_INDEX] == 25.21
+    assert get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state == ScharlauPerception.OUTSIDE_CALCULABLE_RANGE
 
     hass.states.async_set("sensor.test_temperature_sensor", "3.54")
     hass.states.async_set("sensor.test_humidity_sensor", "75.00")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).attributes[
-            ATTR_WINTER_SCHARLAU_INDEX
-        ]
-        == 0
-    )
-    assert (
-        get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.COMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).attributes[ATTR_WINTER_SCHARLAU_INDEX] == 0
+    assert get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state == ScharlauPerception.COMFORTABLE
 
     hass.states.async_set("sensor.test_temperature_sensor", "3.53")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).attributes[
-            ATTR_WINTER_SCHARLAU_INDEX
-        ]
-        == -0.01
-    )
-    assert (
-        get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.SLIGHTLY_UNCOMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).attributes[ATTR_WINTER_SCHARLAU_INDEX] == -0.01
+    assert get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state == ScharlauPerception.SLIGHTLY_UNCOMFORTABLE
 
     hass.states.async_set("sensor.test_temperature_sensor", "-0.06")
     hass.states.async_set("sensor.test_humidity_sensor", "71.00")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).attributes[
-            ATTR_WINTER_SCHARLAU_INDEX
-        ]
-        == -3.0
-    )
-    assert (
-        get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.MODERATELY_UNCOMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).attributes[ATTR_WINTER_SCHARLAU_INDEX] == -3.0
+    assert get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state == ScharlauPerception.MODERATELY_UNCOMFORTABLE
 
     hass.states.async_set("sensor.test_temperature_sensor", "-0.07")
     hass.states.async_set("sensor.test_humidity_sensor", "71.00")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).attributes[
-            ATTR_WINTER_SCHARLAU_INDEX
-        ]
-        == -3.01
-    )
-    assert (
-        get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.HIGHLY_UNCOMFORTABLE
-    )
+    assert get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).attributes[ATTR_WINTER_SCHARLAU_INDEX] == -3.01
+    assert get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state == ScharlauPerception.HIGHLY_UNCOMFORTABLE
 
     hass.states.async_set("sensor.test_temperature_sensor", "-6.01")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.OUTSIDE_CALCULABLE_RANGE
-    )
+    assert get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state == ScharlauPerception.OUTSIDE_CALCULABLE_RANGE
 
     hass.states.async_set("sensor.test_temperature_sensor", "6.01")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.OUTSIDE_CALCULABLE_RANGE
-    )
+    assert get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state == ScharlauPerception.OUTSIDE_CALCULABLE_RANGE
 
     hass.states.async_set("sensor.test_temperature_sensor", "6.00")
     hass.states.async_set("sensor.test_humidity_sensor", "39.00")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state
-        == ScharlauPerception.OUTSIDE_CALCULABLE_RANGE
-    )
+    assert get_sensor(hass, SensorType.WINTER_SCHARLAU_PERCEPTION).state == ScharlauPerception.OUTSIDE_CALCULABLE_RANGE
 
 
 @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
 async def test_thoms_discomfort_perception(hass, start_ha):
     """Test if thoms discomfort perception is calculated correctly."""
     assert get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION) is not None
-    assert (
-        get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).attributes[
-            ATTR_THOMS_DISCOMFORT_INDEX
-        ]
-        == 20.94
-    )
-    assert (
-        get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).state
-        == ThomsDiscomfortPerception.NO_DISCOMFORT
-    )
+    assert get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).attributes[ATTR_THOMS_DISCOMFORT_INDEX] == 20.94
+    assert get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).state == ThomsDiscomfortPerception.NO_DISCOMFORT
 
     hass.states.async_set("sensor.test_temperature_sensor", "25.06")
     hass.states.async_set("sensor.test_humidity_sensor", "50.05")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).attributes[
-            ATTR_THOMS_DISCOMFORT_INDEX
-        ]
-        == 21
-    )
-    assert (
-        get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).state
-        == ThomsDiscomfortPerception.LESS_THAN_HALF
-    )
+    assert get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).attributes[ATTR_THOMS_DISCOMFORT_INDEX] == 21
+    assert get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).state == ThomsDiscomfortPerception.LESS_THAN_HALF
 
     hass.states.async_set("sensor.test_temperature_sensor", "27.50")
     hass.states.async_set("sensor.test_humidity_sensor", "63.80")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).attributes[
-            ATTR_THOMS_DISCOMFORT_INDEX
-        ]
-        == 24
-    )
-    assert (
-        get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).state
-        == ThomsDiscomfortPerception.MORE_THAN_HALF
-    )
+    assert get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).attributes[ATTR_THOMS_DISCOMFORT_INDEX] == 24
+    assert get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).state == ThomsDiscomfortPerception.MORE_THAN_HALF
 
     hass.states.async_set("sensor.test_temperature_sensor", "30.70")
     hass.states.async_set("sensor.test_humidity_sensor", "62.70")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).attributes[
-            ATTR_THOMS_DISCOMFORT_INDEX
-        ]
-        == 27
-    )
-    assert (
-        get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).state
-        == ThomsDiscomfortPerception.MOST
-    )
+    assert get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).attributes[ATTR_THOMS_DISCOMFORT_INDEX] == 27
+    assert get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).state == ThomsDiscomfortPerception.MOST
 
     hass.states.async_set("sensor.test_temperature_sensor", "32.30")
     hass.states.async_set("sensor.test_humidity_sensor", "71.50")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).attributes[
-            ATTR_THOMS_DISCOMFORT_INDEX
-        ]
-        == 29
-    )
-    assert (
-        get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).state
-        == ThomsDiscomfortPerception.EVERYONE
-    )
+    assert get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).attributes[ATTR_THOMS_DISCOMFORT_INDEX] == 29
+    assert get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).state == ThomsDiscomfortPerception.EVERYONE
 
     hass.states.async_set("sensor.test_temperature_sensor", "35.20")
     hass.states.async_set("sensor.test_humidity_sensor", "75.10")
     await hass.async_block_till_done()
-    assert (
-        get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).attributes[
-            ATTR_THOMS_DISCOMFORT_INDEX
-        ]
-        == 32
-    )
-    assert (
-        get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).state
-        == ThomsDiscomfortPerception.DANGEROUS
-    )
+    assert get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).attributes[ATTR_THOMS_DISCOMFORT_INDEX] == 32
+    assert get_sensor(hass, SensorType.THOMS_DISCOMFORT_PERCEPTION).state == ThomsDiscomfortPerception.DANGEROUS
 
 
 @pytest.mark.parametrize(
@@ -880,12 +600,7 @@ async def test_unique_id(hass, start_ha):
     assert len(ent_reg.entities) == 2 * LEN_DEFAULT_SENSORS
 
     for sensor_type in DEFAULT_SENSOR_TYPES:
-        assert (
-            ent_reg.async_get_entity_id(
-                PLATFORM_DOMAIN, "thermal_comfort", f"unique{sensor_type}"
-            )
-            is not None
-        )
+        assert ent_reg.async_get_entity_id(PLATFORM_DOMAIN, "thermal_comfort", f"unique{sensor_type}") is not None
         assert (
             ent_reg.async_get_entity_id(
                 PLATFORM_DOMAIN,
@@ -1079,15 +794,11 @@ async def test_create_sensors(hass: HomeAssistant):
     """
 
     def get_eid(registry: er, _id):
-        return registry.async_get_entity_id(
-            domain="sensor", platform=DOMAIN, unique_id=_id
-        )
+        return registry.async_get_entity_id(domain="sensor", platform=DOMAIN, unique_id=_id)
 
     registry = er.async_get(hass)
 
-    entry = MockConfigEntry(
-        domain=DOMAIN, data=ADVANCED_USER_INPUT, entry_id="test", unique_id="uniqueid"
-    )
+    entry = MockConfigEntry(domain=DOMAIN, data=ADVANCED_USER_INPUT, entry_id="test", unique_id="uniqueid")
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
@@ -1122,10 +833,7 @@ async def test_create_sensors(hass: HomeAssistant):
 async def test_sensor_type_names(hass: HomeAssistant, start_ha: Callable) -> None:
     """Test if sensor types shortform can be used."""
     assert len(hass.states.async_all(PLATFORM_DOMAIN)) == 2
-    assert (
-        SensorType.DEW_POINT_PERCEPTION.to_name()
-        in get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).name
-    )
+    assert SensorType.DEW_POINT_PERCEPTION.to_name() in get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).name
 
 
 @pytest.mark.parametrize(
@@ -1165,7 +873,4 @@ async def test_sensor_type_names(hass: HomeAssistant, start_ha: Callable) -> Non
 async def test_global_options(hass: HomeAssistant, start_ha: Callable) -> None:
     """Test if global options are correctly set."""
     assert len(hass.states.async_all(PLATFORM_DOMAIN)) == 3
-    assert (
-        get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).attributes["icon"]
-        == "tc:thermal-perception"
-    )
+    assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).attributes["icon"] == "tc:thermal-perception"

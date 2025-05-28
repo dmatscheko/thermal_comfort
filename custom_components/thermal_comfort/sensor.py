@@ -1,4 +1,5 @@
 """Sensor platform for thermal_comfort."""
+
 from asyncio import Lock
 from dataclasses import dataclass
 from datetime import timedelta
@@ -11,13 +12,7 @@ from typing import Any, Self
 import voluptuous as vol
 
 from homeassistant import util
-from homeassistant.components.sensor import (
-    DOMAIN as SENSOR_DOMAIN,
-    SensorDeviceClass,
-    SensorEntity,
-    SensorEntityDescription,
-    SensorStateClass,
-)
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     ATTR_TEMPERATURE,
@@ -37,10 +32,7 @@ from homeassistant.helpers import entity_registry as er
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import (
-    async_track_state_change_event,
-    async_track_time_interval,
-)
+from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 from homeassistant.helpers.template import Template
 from homeassistant.loader import async_get_custom_components
 from homeassistant.util.unit_conversion import TemperatureConverter
@@ -357,10 +349,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         _LOGGER.warning(
             "Legacy YAML configuration is unsupported in 2.0. You should update to the new yaml format: https://github.com/dolezsa/thermal_comfort/blob/master/documentation/yaml.md"
         )
-        devices = [
-            dict(device_config, **{CONF_NAME: device_name})
-            for (device_name, device_config) in config[CONF_SENSORS].items()
-        ]
+        devices = [dict(device_config, **{CONF_NAME: device_name}) for (device_name, device_config) in config[CONF_SENSORS].items()]
         options = {}
     else:
         devices = discovery_info["devices"]
@@ -377,9 +366,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             temperature_entity=device_config.get(CONF_TEMPERATURE_SENSOR),
             humidity_entity=device_config.get(CONF_HUMIDITY_SENSOR),
             should_poll=device_config.get(CONF_POLL, POLL_DEFAULT),
-            scan_interval=device_config.get(
-                CONF_SCAN_INTERVAL, timedelta(seconds=SCAN_INTERVAL_DEFAULT)
-            ),
+            scan_interval=device_config.get(CONF_SCAN_INTERVAL, timedelta(seconds=SCAN_INTERVAL_DEFAULT)),
         )
 
         sensors += [
@@ -391,9 +378,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                 custom_icons=device_config.get(CONF_CUSTOM_ICONS, False),
                 is_config_entry=False,
             )
-            for sensor_type in device_config.get(
-                CONF_SENSOR_TYPES, DEFAULT_SENSOR_TYPES
-            )
+            for sensor_type in device_config.get(CONF_SENSOR_TYPES, DEFAULT_SENSOR_TYPES)
         ]
 
     async_add_entities(sensors)
@@ -411,9 +396,7 @@ async def async_setup_entry(
     """
     data = hass.data[DOMAIN][config_entry.entry_id]
     if data.get(CONF_SCAN_INTERVAL) is None:
-        hass.data[DOMAIN][config_entry.entry_id][
-            CONF_SCAN_INTERVAL
-        ] = SCAN_INTERVAL_DEFAULT
+        hass.data[DOMAIN][config_entry.entry_id][CONF_SCAN_INTERVAL] = SCAN_INTERVAL_DEFAULT
         data[CONF_SCAN_INTERVAL] = SCAN_INTERVAL_DEFAULT
 
     _LOGGER.debug("async_setup_entry: %s", data)
@@ -424,9 +407,7 @@ async def async_setup_entry(
         temperature_entity=data[CONF_TEMPERATURE_SENSOR],
         humidity_entity=data[CONF_HUMIDITY_SENSOR],
         should_poll=data[CONF_POLL],
-        scan_interval=timedelta(
-            seconds=data.get(CONF_SCAN_INTERVAL, SCAN_INTERVAL_DEFAULT)
-        ),
+        scan_interval=timedelta(seconds=data.get(CONF_SCAN_INTERVAL, SCAN_INTERVAL_DEFAULT)),
     )
 
     entities: list[SensorThermalComfort] = [
@@ -434,7 +415,7 @@ async def async_setup_entry(
             device=compute_device,
             sensor_type=sensor_type,
             custom_icons=data[CONF_CUSTOM_ICONS],
-            is_enabled_default=sensor_type in data.get(CONF_ENABLED_SENSORS, {})
+            is_enabled_default=sensor_type in data.get(CONF_ENABLED_SENSORS, {}),
         )
         for sensor_type in SensorType
     ]
@@ -475,9 +456,7 @@ class SensorThermalComfort(SensorEntity):
         if not is_config_entry:
             if self._device.name is not None:
                 entity_description["has_entity_name"] = False
-                entity_description["name"] = (
-                    f"{self._device.name} {self._sensor_type.to_name()}"
-                )
+                entity_description["name"] = f"{self._device.name} {self._sensor_type.to_name()}"
             if sensor_type in [SensorType.DEW_POINT_PERCEPTION, SensorType.SUMMER_SIMMER_INDEX, SensorType.SUMMER_SIMMER_PERCEPTION]:
                 registry = er.async_get(self._device.hass)
                 match sensor_type:
@@ -510,9 +489,7 @@ class SensorThermalComfort(SensorEntity):
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        return dict(
-            self._device.extra_state_attributes, **self._attr_extra_state_attributes
-        )
+        return dict(self._device.extra_state_attributes, **self._attr_extra_state_attributes)
 
     async def async_added_to_hass(self):
         """Register callbacks."""
@@ -536,7 +513,6 @@ class SensorThermalComfort(SensorEntity):
 
         self._attr_native_value = value
 
-
         for property_name, template in (
             ("_attr_icon", self._icon_template),
             ("_attr_entity_picture", self._entity_picture_template),
@@ -548,9 +524,7 @@ class SensorThermalComfort(SensorEntity):
                 setattr(self, property_name, template.async_render())
             except TemplateError as ex:
                 friendly_property_name = property_name[1:].replace("_", " ")
-                if ex.args and ex.args[0].startswith(
-                    "UndefinedError: 'None' has no attribute"
-                ):
+                if ex.args and ex.args[0].startswith("UndefinedError: 'None' has no attribute"):
                     # Common during HA startup - so just a warning
                     _LOGGER.warning(
                         "Could not render %s template %s, the state is unknown.",
@@ -607,25 +581,14 @@ class DeviceThermalComfort:
         self._humidity = None
         self._should_poll = should_poll
         self.sensors = []
-        self._compute_states = {
-            sensor_type: ComputeState(lock=Lock())
-            for sensor_type in SENSOR_TYPES
-        }
+        self._compute_states = {sensor_type: ComputeState(lock=Lock()) for sensor_type in SENSOR_TYPES}
 
-        async_track_state_change_event(
-            self.hass, self._temperature_entity, self.temperature_state_listener
-        )
+        async_track_state_change_event(self.hass, self._temperature_entity, self.temperature_state_listener)
 
-        async_track_state_change_event(
-            self.hass, self._humidity_entity, self.humidity_state_listener
-        )
+        async_track_state_change_event(self.hass, self._humidity_entity, self.humidity_state_listener)
 
-        hass.async_create_task(
-            self._new_temperature_state(hass.states.get(temperature_entity))
-        )
-        hass.async_create_task(
-            self._new_humidity_state(hass.states.get(humidity_entity))
-        )
+        hass.async_create_task(self._new_temperature_state(hass.states.get(temperature_entity)))
+        hass.async_create_task(self._new_humidity_state(hass.states.get(humidity_entity)))
 
         hass.async_create_task(self._set_version())
 
@@ -639,9 +602,7 @@ class DeviceThermalComfort:
             )
 
     async def _set_version(self):
-        self._device_info["sw_version"] = (
-            await async_get_custom_components(self.hass)
-        )[DOMAIN].version.string
+        self._device_info["sw_version"] = (await async_get_custom_components(self.hass))[DOMAIN].version.string
 
     async def temperature_state_listener(self, event):
         """Handle temperature device state changes."""
@@ -692,12 +653,8 @@ class DeviceThermalComfort:
     @compute_once_lock(SensorType.HEAT_INDEX)
     async def heat_index(self) -> float:
         """Heat Index <http://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml>."""
-        fahrenheit = TemperatureConverter.convert(
-            self._temperature, UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT
-        )
-        hi = 0.5 * (
-            fahrenheit + 61.0 + ((fahrenheit - 68.0) * 1.2) + (self._humidity * 0.094)
-        )
+        fahrenheit = TemperatureConverter.convert(self._temperature, UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT)
+        hi = 0.5 * (fahrenheit + 61.0 + ((fahrenheit - 68.0) * 1.2) + (self._humidity * 0.094))
 
         if hi > 79:
             hi = -42.379 + 2.04901523 * fahrenheit
@@ -710,9 +667,7 @@ class DeviceThermalComfort:
             hi = hi + -0.00000199 * pow(fahrenheit, 2) * pow(self._humidity, 2)
 
         if self._humidity < 13 and fahrenheit >= 80 and fahrenheit <= 112:
-            hi = hi - ((13 - self._humidity) * 0.25) * math.sqrt(
-                (17 - abs(fahrenheit - 95)) * 0.05882
-            )
+            hi = hi - ((13 - self._humidity) * 0.25) * math.sqrt((17 - abs(fahrenheit - 95)) * 0.05882)
         elif self._humidity > 85 and fahrenheit >= 80 and fahrenheit <= 87:
             hi = hi + ((self._humidity - 85) * 0.1) * ((87 - fahrenheit) * 0.2)
 
@@ -773,9 +728,7 @@ class DeviceThermalComfort:
         """Absolute Humidity <https://carnotcycle.wordpress.com/2012/08/04/how-to-convert-relative-humidity-to-absolute-humidity/>."""
         abs_temperature = self._temperature + 273.15
         abs_humidity = 6.112
-        abs_humidity *= math.exp(
-            (17.67 * self._temperature) / (243.5 + self._temperature)
-        )
+        abs_humidity *= math.exp((17.67 * self._temperature) / (243.5 + self._temperature))
         abs_humidity *= self._humidity
         abs_humidity *= 2.1674
         abs_humidity /= abs_temperature
@@ -800,11 +753,7 @@ class DeviceThermalComfort:
                 frost_risk = FrostRisk.LOW  # Frost unlikely despite the temperature
             else:
                 frost_risk = FrostRisk.HIGH  # high probability of frost
-        elif (
-            self._temperature <= 4
-            and frostpoint <= 0.5
-            and absolutehumidity > thresholdAbsHumidity
-        ):
+        elif self._temperature <= 4 and frostpoint <= 0.5 and absolutehumidity > thresholdAbsHumidity:
             frost_risk = FrostRisk.MEDIUM  # Frost probable despite the temperature
         else:
             frost_risk = FrostRisk.NONE  # No risk of frost
@@ -874,15 +823,9 @@ class DeviceThermalComfort:
     @compute_once_lock(SensorType.SUMMER_SIMMER_INDEX)
     async def summer_simmer_index(self) -> float:
         """<https://www.vcalc.com/wiki/rklarsen/Summer+Simmer+Index>."""
-        fahrenheit = TemperatureConverter.convert(
-            self._temperature, UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT
-        )
+        fahrenheit = TemperatureConverter.convert(self._temperature, UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT)
 
-        si = (
-            1.98
-            * (fahrenheit - (0.55 - (0.0055 * self._humidity)) * (fahrenheit - 58.0))
-            - 56.83
-        )
+        si = 1.98 * (fahrenheit - (0.55 - (0.0055 * self._humidity)) * (fahrenheit - 58.0)) - 56.83
 
         if fahrenheit < 58:  # Summer Simmer Index is only valid above 58°F
             si = fahrenheit
@@ -959,12 +902,10 @@ class DeviceThermalComfort:
     async def thoms_discomfort_perception(self) -> (ThomsDiscomfortPerception, dict):
         """Calculate Thom's discomfort index and perception."""
         tw = (
-            self._temperature
-            * math.atan(0.151977 * pow(self._humidity + 8.313659, 1 / 2))
+            self._temperature * math.atan(0.151977 * pow(self._humidity + 8.313659, 1 / 2))
             + math.atan(self._temperature + self._humidity)
             - math.atan(self._humidity - 1.676331)
-            + pow(0.00391838 * self._humidity, 3 / 2)
-            * math.atan(0.023101 * self._humidity)
+            + pow(0.00391838 * self._humidity, 3 / 2) * math.atan(0.023101 * self._humidity)
             - 4.686035
         )
         tdi = 0.5 * tw + 0.5 * self._temperature

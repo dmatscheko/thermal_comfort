@@ -5,13 +5,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
-import voluptuous as vol
 
-from custom_components.thermal_comfort.const import (
-    CONF_HUMIDITY_SENSOR,
-    CONF_TEMPERATURE_SENSOR,
-    DOMAIN,
-)
+from custom_components.thermal_comfort.const import DOMAIN
 from homeassistant import config_entries
 from homeassistant.const import CONF_NAME
 from homeassistant.data_entry_flow import FlowResultType
@@ -45,9 +40,7 @@ async def _flow_configure(hass, r, _input=ADVANCED_USER_INPUT):
         "homeassistant.helpers.entity_registry.EntityRegistry.async_get",
         return_value=MagicMock(unique_id="foo"),
     ):
-        return await hass.config_entries.flow.async_configure(
-            r["flow_id"], user_input=_input
-        )
+        return await hass.config_entries.flow.async_configure(r["flow_id"], user_input=_input)
 
 
 @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
@@ -90,9 +83,7 @@ async def test_options_flow(hass, start_ha):
     entry.add_to_hass(hass)
 
     # Initialize an options flow for entry
-    result = await hass.config_entries.options.async_init(
-        entry.entry_id, context={"show_advanced_options": True}
-    )
+    result = await hass.config_entries.options.async_init(entry.entry_id, context={"show_advanced_options": True})
 
     # Verify that the first options step is a user form
     assert result["type"] == FlowResultType.FORM
@@ -120,9 +111,9 @@ async def test_config_flow_enabled():
         assert manifest.get("config_flow") is True
 
 
-#@pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
-#@pytest.mark.parametrize("sensor", [CONF_TEMPERATURE_SENSOR, CONF_HUMIDITY_SENSOR])
-#async def test_missed_sensors(hass, sensor, start_ha):
+# @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
+# @pytest.mark.parametrize("sensor", [CONF_TEMPERATURE_SENSOR, CONF_HUMIDITY_SENSOR])
+# async def test_missed_sensors(hass, sensor, start_ha):
 #    """Test is we show message if sensor missed."""
 #
 #    result = await _flow_init(hass)

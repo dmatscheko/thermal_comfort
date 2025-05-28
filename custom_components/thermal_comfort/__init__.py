@@ -3,6 +3,7 @@
 For more details about this integration, please refer to
 https://github.com/dolezsa/thermal_comfort
 """
+
 from __future__ import annotations
 
 import logging
@@ -16,10 +17,7 @@ from homeassistant.core import Event, HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigValidationError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv, discovery
 from homeassistant.helpers.entity_registry import RegistryEntry, async_migrate_entries
-from homeassistant.helpers.reload import (
-    async_integration_yaml_config,
-    async_reload_integration_platforms,
-)
+from homeassistant.helpers.reload import async_integration_yaml_config, async_reload_integration_platforms
 from homeassistant.helpers.service import async_register_admin_service
 from homeassistant.helpers.typing import ConfigType
 
@@ -53,9 +51,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         CONF_CUSTOM_ICONS: get_value(entry, CONF_CUSTOM_ICONS),
     }
     if get_value(entry, CONF_ENABLED_SENSORS):
-        hass.data[DOMAIN][entry.entry_id][CONF_ENABLED_SENSORS] = get_value(
-            entry, CONF_ENABLED_SENSORS
-        )
+        hass.data[DOMAIN][entry.entry_id][CONF_ENABLED_SENSORS] = get_value(entry, CONF_ENABLED_SENSORS)
         data = dict(entry.data)
         data.pop(CONF_ENABLED_SENSORS)
         hass.config_entries.async_update_entry(entry, data=data)
@@ -64,9 +60,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # We have no unique_id yet, let's use backup.
         hass.config_entries.async_update_entry(entry, unique_id=entry.entry_id)
 
-    await hass.async_create_task(
-        hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    )
+    await hass.async_create_task(hass.config_entries.async_forward_entry_setups(entry, PLATFORMS))
     update_listener = entry.add_update_listener(async_update_options)
     hass.data[DOMAIN][entry.entry_id][UPDATE_LISTENER] = update_listener
     return True
@@ -117,9 +111,7 @@ OPTIONS_SCHEMA = vol.Schema({}).extend(
 
 COMBINED_SCHEMA = vol.Schema(
     {
-        vol.Optional(SENSOR_DOMAIN): vol.All(
-            cv.ensure_list, [SENSOR_SCHEMA]
-        ),
+        vol.Optional(SENSOR_DOMAIN): vol.All(cv.ensure_list, [SENSOR_SCHEMA]),
     }
 ).extend(OPTIONS_SCHEMA.schema)
 
@@ -132,6 +124,7 @@ CONFIG_SCHEMA = vol.Schema(
     },
     extra=vol.ALLOW_EXTRA,
 )
+
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the thermal_comfort integration."""
