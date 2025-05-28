@@ -1,4 +1,26 @@
+[project]
+name = "thermal-comfort"
+version = "0.0.0"
+dependencies = [
+  "pytest-homeassistant-custom-component>=0.13.52",
+]
 requires-python = ">=3.11.0"
+authors = [
+  {name = "dolezsa"},
+  {name = "rautesamtr"},
+]
+maintainers = [
+  {name = "dolezsa"},
+  {name = "rautesamtr"},
+]
+description = "Thermal Comfort sensor for HA (absolute humidity, heat index, dew point, thermal perception)"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["thermal", "weather", "comfort"]
+classifiers = [
+  "Programming Language :: Python"
+]
 
 [tool.black]
 extend-exclude = "/generated/"
@@ -465,7 +487,7 @@ select = [
     "N804", # First argument of a class method should be named cls
     "N805", # First argument of a method should be named self
     "N815", # Variable {name} in class scope should not be mixedCase
-    "PGH001", # No builtin eval() allowed
+    #"PGH001", # No builtin eval() allowed
     "PGH004",  # Use specific rule codes when using noqa
     "PLC0414", # Useless import alias. Import alias does not rename original package.
     "PLC", # pylint
@@ -504,8 +526,8 @@ select = [
     "T20",  # flake8-print
     "TID251", # Banned imports
     "TRY004", # Prefer TypeError exception for invalid type
-    "TRY200", # Use raise from to specify exception cause
-    "TRY302", # Remove exception handler; error is immediately re-raised
+    #"TRY200", # Use raise from to specify exception cause
+    #"TRY302", # Remove exception handler; error is immediately re-raised
     "UP",  # pyupgrade
     "W",  # pycodestyle
 ]
