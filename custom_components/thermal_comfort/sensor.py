@@ -332,6 +332,9 @@ def compute_once_lock(sensor_type):
     def wrapper(func):
         @wraps(func)
         async def wrapped(self, *args, **kwargs):
+            # Check if inputs are invalid; return None if so
+            if self._temperature is None or self._humidity is None:
+                return None
             async with self._compute_states[sensor_type].lock:
                 if self._compute_states[sensor_type].needs_update:
                     setattr(self, f"_{sensor_type}", await func(self, *args, **kwargs))
@@ -506,15 +509,18 @@ class SensorThermalComfort(SensorEntity):
     async def async_update(self):
         """Update the state of the sensor."""
         value = await getattr(self._device, self._sensor_type)()
-        if value is None:  # can happen during startup
-            return
+        if value is None:
+            self._attr_native_value = None
+            self._attr_extra_state_attributes = {}
+        else:
+            if isinstance(value, tuple) and len(value) == 2:
+                self._attr_extra_state_attributes.update(value[1])
+                value = value[0]
+            else:
+                self._attr_extra_state_attributes = {}
+            self._attr_native_value = value
 
-        if type(value) == tuple and len(value) == 2:
-            self._attr_extra_state_attributes.update(value[1])
-            value = value[0]
-
-        self._attr_native_value = value
-
+        # Handle icon and entity picture templates
         for property_name, template in (
             ("_attr_icon", self._icon_template),
             ("_attr_entity_picture", self._entity_picture_template),
@@ -544,6 +550,9 @@ class SensorThermalComfort(SensorEntity):
                         self.name,
                         ex,
                     )
+
+        # Explicitly write the state to ensure it updates in Home Assistant
+        self.async_write_ha_state()
 
 
 @dataclass
@@ -630,32 +639,42 @@ class DeviceThermalComfort:
         await self._new_temperature_state(event.data.get("new_state"))
 
     async def _new_temperature_state(self, state):
+        """Process new temperature state."""
         if _is_valid_state(state):
-            hass = self.hass
-            unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT, hass.config.units.temperature_unit)
-            temp = util.convert(state.state, float)
-            # convert to celsius if necessary
-            temperature = TemperatureConverter.convert(temp, unit, UnitOfTemperature.CELSIUS)
-            if -89.2 <= temperature <= 56.7:
-                self.extra_state_attributes[ATTR_TEMPERATURE] = temp
-                self._temperature = temperature
-                await self.async_update()
+            try:
+                temp = float(state.state)
+                unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT, self.hass.config.units.temperature_unit)
+                temperature = TemperatureConverter.convert(temp, unit, UnitOfTemperature.CELSIUS)
+                if -89.2 <= temperature <= 56.7:
+                    self._temperature = temperature
+                    self.extra_state_attributes[ATTR_TEMPERATURE] = temp
+                else:
+                    self._temperature = None  # Out of range
+            except ValueError:
+                self._temperature = None  # Non-numeric state
         else:
-            _LOGGER.info("Temperature has an invalid value: %s. Can't calculate new states.", state)
+            self._temperature = None  # Unavailable or unknown state
+        await self.async_update()  # Always update sensors
 
     async def humidity_state_listener(self, event):
         """Handle humidity device state changes."""
         await self._new_humidity_state(event.data.get("new_state"))
 
     async def _new_humidity_state(self, state):
+        """Process new humidity state."""
         if _is_valid_state(state):
-            humidity = float(state.state)
-            if 0 < humidity <= 100:
-                self._humidity = float(state.state)
-                self.extra_state_attributes[ATTR_HUMIDITY] = self._humidity
-                await self.async_update()
+            try:
+                humidity = float(state.state)
+                if 0 < humidity <= 100:  # Valid humidity range
+                    self._humidity = humidity
+                    self.extra_state_attributes[ATTR_HUMIDITY] = humidity
+                else:
+                    self._humidity = None  # Out of range (e.g., 150.0)
+            except ValueError:
+                self._humidity = None  # Non-numeric state
         else:
-            _LOGGER.info("Relative humidity has an invalid value: %s. Can't calculate new states.", state)
+            self._humidity = None  # Unavailable or unknown state
+        await self.async_update()  # Always update sensors
 
     @compute_once_lock(SensorType.DEW_POINT)
     async def dew_point(self) -> float:
@@ -948,11 +967,11 @@ class DeviceThermalComfort:
 
     async def async_update(self):
         """Update the state."""
-        if self._temperature is not None and self._humidity is not None:
-            for sensor_type in SENSOR_TYPES:
-                self._compute_states[sensor_type].needs_update = True
-            if not self._should_poll:
-                await self.async_update_sensors(True)
+        # Always mark all sensors as needing update
+        for sensor_type in SENSOR_TYPES:
+            self._compute_states[sensor_type].needs_update = True
+        if not self._should_poll:
+            await self.async_update_sensors(True)
 
     async def async_update_sensors(self, force_refresh: bool = False) -> None:
         """Update the state of the sensors."""

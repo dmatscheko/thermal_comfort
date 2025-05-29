@@ -906,35 +906,35 @@ async def test_invalid_sensor_states(hass, start_ha):
     hass.states.async_set("sensor.test_temperature_sensor", "invalid")
     await hass.async_block_till_done()
     for sensor_type in DEFAULT_SENSOR_TYPES:
-        assert get_sensor(hass, sensor_type).state is None, f"{sensor_type} should be None for invalid temperature"
+        assert get_sensor(hass, sensor_type).state == "unknown", f"{sensor_type} should be unknown for invalid temperature"
 
     # Test out-of-range humidity
     hass.states.async_set("sensor.test_temperature_sensor", "25.0")
     hass.states.async_set("sensor.test_humidity_sensor", "150.0")
     await hass.async_block_till_done()
     for sensor_type in DEFAULT_SENSOR_TYPES:
-        assert get_sensor(hass, sensor_type).state is None, f"{sensor_type} should be None for invalid humidity"
+        assert get_sensor(hass, sensor_type).state == "unknown", f"{sensor_type} should be unknown for invalid humidity"
 
     # Test both sensors unavailable
     hass.states.async_set("sensor.test_temperature_sensor", STATE_UNAVAILABLE)
     hass.states.async_set("sensor.test_humidity_sensor", STATE_UNAVAILABLE)
     await hass.async_block_till_done()
     for sensor_type in DEFAULT_SENSOR_TYPES:
-        assert get_sensor(hass, sensor_type).state is None, f"{sensor_type} should be None when both sensors are unavailable"
+        assert get_sensor(hass, sensor_type).state == "unknown", f"{sensor_type} should be unknown when both sensors are unavailable"
 
 
 @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
 async def test_edge_case_values(hass, start_ha):
     """Test calculations at edge case temperature and humidity values."""
     # Test minimum temperature
-    hass.states.async_set("sensor.test_temperature_sensor", "-150.0")
+    hass.states.async_set("sensor.test_temperature_sensor", "-89.2")
     hass.states.async_set("sensor.test_humidity_sensor", "50.0")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.DEW_POINT).state is not None, "Dew point should be calculated for min temp"
     assert get_sensor(hass, SensorType.ABSOLUTE_HUMIDITY).state is not None, "Absolute humidity should be calculated"
 
     # Test maximum temperature
-    hass.states.async_set("sensor.test_temperature_sensor", "150.0")
+    hass.states.async_set("sensor.test_temperature_sensor", "56.7")
     await hass.async_block_till_done()
     assert get_sensor(hass, SensorType.HEAT_INDEX).state is not None, "Heat index should be calculated for max temp"
     assert get_sensor(hass, SensorType.HUMIDEX).state is not None, "Humidex should be calculated"
@@ -943,13 +943,14 @@ async def test_edge_case_values(hass, start_ha):
     hass.states.async_set("sensor.test_temperature_sensor", "25.0")
     hass.states.async_set("sensor.test_humidity_sensor", "0.0")
     await hass.async_block_till_done()
-    dew_point_state = get_sensor(hass, SensorType.DEW_POINT).state
-    assert dew_point_state is None, f"Dew point should be None for 0% humidity, but is {dew_point_state}"
+    for sensor_type in DEFAULT_SENSOR_TYPES:
+        sensor_state = get_sensor(hass, sensor_type).state
+        assert sensor_state == "unknown", f"{sensor_type} should be unknown for 0% humidity, but is {sensor_state}"
 
     # Test 100% humidity
     hass.states.async_set("sensor.test_humidity_sensor", "100.0")
     await hass.async_block_till_done()
-    assert get_sensor(hass, SensorType.DEW_POINT).state is not None, "Dew point should be calculated for 100% humidity"
+    assert get_sensor(hass, SensorType.DEW_POINT).state != "unknown", "Dew point should be calculated for 100% humidity"
 
 
 @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
