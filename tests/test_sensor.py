@@ -16,6 +16,7 @@ from custom_components.thermal_comfort.sensor import (
     ATTR_THOMS_DISCOMFORT_INDEX,
     ATTR_WINTER_SCHARLAU_INDEX,
     CONF_CUSTOM_ICONS,
+    CONF_ENABLED_SENSORS,
     CONF_POLL,
     CONF_SCAN_INTERVAL,
     CONF_SENSOR_TYPES,
@@ -1051,31 +1052,38 @@ async def test_polling_behavior(hass: HomeAssistant, start_ha, caplog, freezer):
     await hass.async_block_till_done()
 
 
-# @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
-# async def test_custom_icons(hass, start_ha):
-#     """Test custom icon functionality."""
-#     # Enable custom icons
-#     config_entry = MockConfigEntry(
-#         domain=DOMAIN,
-#         data={**ADVANCED_USER_INPUT, CONF_CUSTOM_ICONS: True},
-#         entry_id="test",
-#     )
-#     config_entry.add_to_hass(hass)
-#     await hass.config_entries.async_setup(config_entry.entry_id)
-#     await hass.async_block_till_done()
+async def test_custom_icons(hass):
+    """Test custom icon functionality."""
+    # Mock temperature and humidity sensor states
+    hass.states.async_set(
+        "sensor.test_temperature_sensor", "25.0", attributes={"device_class": "temperature", "state_class": "measurement", "unit_of_measurement": "°C"}
+    )
+    hass.states.async_set(
+        "sensor.test_humidity_sensor", "50.0", attributes={"device_class": "humidity", "state_class": "measurement", "unit_of_measurement": "%"}
+    )
+    await hass.async_block_till_done()
 
-#     assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).attributes["icon"] == "tc:thermal-perception"
-#     assert get_sensor(hass, SensorType.ABSOLUTE_HUMIDITY).attributes["icon"] == "mdi:water"
+    await hass.async_start()
+    await hass.async_block_till_done()
 
-#     # Disable custom icons
-#     config_entry = MockConfigEntry(
-#         domain=DOMAIN,
-#         data={**ADVANCED_USER_INPUT, CONF_CUSTOM_ICONS: False},
-#         entry_id="test2",
-#     )
-#     config_entry.add_to_hass(hass)
-#     await hass.config_entries.async_setup(config_entry.entry_id)
-#     await hass.async_block_till_done()
+    # Set up Thermal Comfort config entry with enabled sensors
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            **ADVANCED_USER_INPUT,
+            CONF_CUSTOM_ICONS: True,
+            CONF_ENABLED_SENSORS: [SensorType.DEW_POINT_PERCEPTION],  # Enable the sensor
+        },
+        entry_id="test",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
 
-#     assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).attributes["icon"] == "mdi:sun-thermometer"
-#     assert get_sensor(hass, SensorType.ABSOLUTE_HUMIDITY).attributes["icon"] == "mdi:water"
+    def get_sensor(hass, sensor_type: SensorType) -> State | None:
+        return hass.states.get(f"sensor.test_thermal_comfort_{sensor_type}")
+
+    # Verify sensor exists before checking attributes
+    sensor_state = get_sensor(hass, SensorType.DEW_POINT_PERCEPTION)
+    assert sensor_state is not None, f"Sensor sensor.test_thermal_comfort_{SensorType.DEW_POINT_PERCEPTION} was not created"
+    assert sensor_state.attributes["icon"] == "tc:thermal-perception"
