@@ -11,7 +11,6 @@ from typing import Any, Self
 
 import voluptuous as vol
 
-from homeassistant import util
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -722,7 +721,7 @@ class DeviceThermalComfort:
         return self._temperature + h
 
     @compute_once_lock(SensorType.HUMIDEX_PERCEPTION)
-    async def humidex_perception(self) -> (HumidexPerception, dict):
+    async def humidex_perception(self) -> tuple[HumidexPerception, dict]:
         """<https://simple.wikipedia.org/wiki/Humidex#Humidex_formula>."""
         humidex = await self.humidex()
         if humidex > 54:
@@ -741,7 +740,7 @@ class DeviceThermalComfort:
         return perception, {ATTR_HUMIDEX: humidex}
 
     @compute_once_lock(SensorType.DEW_POINT_PERCEPTION)
-    async def dew_point_perception(self) -> (DewPointPerception, dict):
+    async def dew_point_perception(self) -> tuple[DewPointPerception, dict]:
         """Dew Point <https://en.wikipedia.org/wiki/Dew_point>."""
         dewpoint = await self.dew_point()
         if dewpoint < 10:
@@ -783,7 +782,7 @@ class DeviceThermalComfort:
         return (Td + (2671.02 / ((2954.61 / T) + 2.193665 * math.log(T) - 13.3448)) - T) - 273.15
 
     @compute_once_lock(SensorType.FROST_RISK)
-    async def frost_risk(self) -> (FrostRisk, dict):
+    async def frost_risk(self) -> tuple[FrostRisk, dict]:
         """Frost Risk Level."""
         thresholdAbsHumidity = 2.8
         absolutehumidity = await self.absolute_humidity()
@@ -801,7 +800,7 @@ class DeviceThermalComfort:
         return frost_risk, {ATTR_FROST_POINT: frostpoint}
 
     @compute_once_lock(SensorType.RELATIVE_STRAIN_PERCEPTION)
-    async def relative_strain_perception(self) -> (RelativeStrainPerception, dict):
+    async def relative_strain_perception(self) -> tuple[RelativeStrainPerception, dict]:
         """Relative strain perception."""
 
         vp = 6.112 * pow(10, 7.5 * self._temperature / (237.7 + self._temperature))
@@ -824,7 +823,7 @@ class DeviceThermalComfort:
         return perception, {ATTR_RELATIVE_STRAIN_INDEX: rsi}
 
     @compute_once_lock(SensorType.SUMMER_SCHARLAU_PERCEPTION)
-    async def summer_scharlau_perception(self) -> (ScharlauPerception, dict):
+    async def summer_scharlau_perception(self) -> tuple[ScharlauPerception, dict]:
         """<https://revistadechimie.ro/pdf/16%20RUSANESCU%204%2019.pdf>."""
         tc = -17.089 * math.log(self._humidity) + 94.979
         ise = tc - self._temperature
@@ -843,7 +842,7 @@ class DeviceThermalComfort:
         return perception, {ATTR_SUMMER_SCHARLAU_INDEX: round(ise, 2)}
 
     @compute_once_lock(SensorType.WINTER_SCHARLAU_PERCEPTION)
-    async def winter_scharlau_perception(self) -> (ScharlauPerception, dict):
+    async def winter_scharlau_perception(self) -> tuple[ScharlauPerception, dict]:
         """<https://revistadechimie.ro/pdf/16%20RUSANESCU%204%2019.pdf>."""
         tc = (0.0003 * self._humidity) + (0.1497 * self._humidity) - 7.7133
         ish = self._temperature - tc
@@ -873,7 +872,7 @@ class DeviceThermalComfort:
         return TemperatureConverter.convert(si, UnitOfTemperature.FAHRENHEIT, UnitOfTemperature.CELSIUS)
 
     @compute_once_lock(SensorType.SUMMER_SIMMER_PERCEPTION)
-    async def summer_simmer_perception(self) -> (SummerSimmerPerception, dict):
+    async def summer_simmer_perception(self) -> tuple[SummerSimmerPerception, dict]:
         """<http://summersimmer.com/default.asp>."""
         si = await self.summer_simmer_index()
         if si < 21.1:
@@ -939,7 +938,7 @@ class DeviceThermalComfort:
         return 1.006 * self._temperature + W * (2501 + 1.86 * self._temperature)
 
     @compute_once_lock(SensorType.THOMS_DISCOMFORT_PERCEPTION)
-    async def thoms_discomfort_perception(self) -> (ThomsDiscomfortPerception, dict):
+    async def thoms_discomfort_perception(self) -> tuple[ThomsDiscomfortPerception, dict]:
         """Calculate Thom's discomfort index and perception."""
         tw = (
             self._temperature * math.atan(0.151977 * pow(self._humidity + 8.313659, 1 / 2))

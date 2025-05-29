@@ -201,7 +201,7 @@ def get_sensors_by_device_class(
             "µg",
             "oz",
             "lb",
-            #
+            # Conductivity, light flow, heat transfer, ...
             "µS/cm",
             "lx",
             "UV index",
