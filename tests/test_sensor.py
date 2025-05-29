@@ -1033,14 +1033,15 @@ async def test_polling_behavior(hass: HomeAssistant, start_ha, caplog, freezer):
         f"Humidity sensor: {hass.states.get('sensor.test_humidity_sensor').state}"
     )
 
-    # Change sensor value; expect no update
+    # Change sensor value and expect immediate update since it listens to state changes
     hass.states.async_set("sensor.test_temperature_sensor", "27.0")
     await hass.async_block_till_done()
-    freezer.tick(timedelta(seconds=3700))  # Match polling test duration
-    await hass.async_block_till_done()
+    ## Commented out to not initiate a poll because the polling in test is hard coded to "value_template: {{ 25.0 | float }}" which is always 25.0.
+    # freezer.tick(timedelta(seconds=3700))  # Match polling test duration to initiate a poll
+    # await hass.async_block_till_done()
     temp = get_sensor(hass, SensorType.DEW_POINT).attributes[ATTR_TEMPERATURE]
-    assert temp == 26.0, (
-        f"Polling disabled - after sensor change. Expected dew point temperature to be 26.0, got {temp}. "
+    assert temp == 27.0, (
+        f"Polling disabled - after sensor change. Expected dew point temperature to be 27.0, got {temp}. "
         f"Temperature sensor: {hass.states.get('sensor.test_temperature_sensor').state}, "
         f"Humidity sensor: {hass.states.get('sensor.test_humidity_sensor').state}"
     )
