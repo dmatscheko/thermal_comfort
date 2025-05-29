@@ -34,9 +34,10 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 from homeassistant.helpers.template import Template
 from homeassistant.loader import async_get_custom_components
+from homeassistant.util import convert as convert_pressure
 from homeassistant.util.unit_conversion import TemperatureConverter
 
-from .const import COMPUTE_DEVICE, DEFAULT_NAME, DOMAIN
+from .const import COMPUTE_DEVICE, CONF_PRESSURE_SENSOR, DEFAULT_NAME, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -367,6 +368,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             unique_id=device_config.get(CONF_UNIQUE_ID),
             temperature_entity=device_config.get(CONF_TEMPERATURE_SENSOR),
             humidity_entity=device_config.get(CONF_HUMIDITY_SENSOR),
+            pressure_entity=device_config.get(CONF_PRESSURE_SENSOR),
             should_poll=device_config.get(CONF_POLL, POLL_DEFAULT),
             scan_interval=device_config.get(CONF_SCAN_INTERVAL, timedelta(seconds=SCAN_INTERVAL_DEFAULT)),
         )
@@ -408,6 +410,7 @@ async def async_setup_entry(
         unique_id=f"{config_entry.unique_id}",
         temperature_entity=data[CONF_TEMPERATURE_SENSOR],
         humidity_entity=data[CONF_HUMIDITY_SENSOR],
+        pressure_entity=data.get(CONF_PRESSURE_SENSOR),
         should_poll=data[CONF_POLL],
         scan_interval=timedelta(seconds=data.get(CONF_SCAN_INTERVAL, SCAN_INTERVAL_DEFAULT)),
     )
@@ -572,6 +575,7 @@ class DeviceThermalComfort:
         unique_id: str,
         temperature_entity: str,
         humidity_entity: str,
+        pressure_entity: str | None,
         should_poll: bool,
         scan_interval: timedelta,
     ):
@@ -587,8 +591,10 @@ class DeviceThermalComfort:
         self.extra_state_attributes = {}
         self._temperature_entity = temperature_entity
         self._humidity_entity = humidity_entity
+        self._pressure_entity = pressure_entity
         self._temperature = None
         self._humidity = None
+        self._pressure_pa = None  # Store pressure in Pascals
         self._should_poll = should_poll
         self.sensors = []
         self._compute_states = {sensor_type: ComputeState(lock=Lock()) for sensor_type in SENSOR_TYPES}
@@ -597,6 +603,9 @@ class DeviceThermalComfort:
 
         self._state_listeners.append(async_track_state_change_event(self.hass, self._temperature_entity, self.temperature_state_listener))
         self._state_listeners.append(async_track_state_change_event(self.hass, self._humidity_entity, self.humidity_state_listener))
+        if self._pressure_entity is not None:
+            self._state_listeners.append(async_track_state_change_event(self.hass, self._pressure_entity, self.pressure_state_listener))
+            hass.async_create_task(self._new_pressure_state(hass.states.get(self._pressure_entity)))
 
         hass.async_create_task(self._new_temperature_state(hass.states.get(temperature_entity)))
         hass.async_create_task(self._new_humidity_state(hass.states.get(humidity_entity)))
@@ -675,6 +684,34 @@ class DeviceThermalComfort:
             self._humidity = None  # Unavailable or unknown state
         await self.async_update()  # Always update sensors
 
+    async def pressure_state_listener(self, event):
+        """Handle pressure device state changes."""
+        await self._new_pressure_state(event.data.get("new_state"))
+
+    async def _new_pressure_state(self, state):
+        """Process new pressure state."""
+        if _is_valid_state(state):
+            try:
+                pressure = float(state.state)
+                unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+                if unit is not None:
+                    self._pressure_pa = convert_pressure(pressure, unit, "Pa")
+                else:
+                    self._pressure_pa = None
+            except ValueError:
+                self._pressure_pa = None
+        else:
+            self._pressure_pa = None
+        await self.async_update()
+
+    def get_pressure_hpa(self) -> float:
+        """Return pressure in hPa, falling back to standard if unavailable."""
+        return self._pressure_pa / 100 if self._pressure_pa is not None else 1013.246  # else is standard pressure at sea-level
+
+    def get_pressure_pa(self) -> float:
+        """Return pressure in Pa, falling back to standard if unavailable."""
+        return self._pressure_pa if self._pressure_pa is not None else 101325  # else is standard pressure at sea-level
+
     @compute_once_lock(SensorType.DEW_POINT)
     async def dew_point(self) -> float:
         """Dew Point <http://wahiduddin.net/calc/density_algorithms.htm>."""
@@ -683,7 +720,7 @@ class DeviceThermalComfort:
         SUM += 5.02808 * math.log(A0, 10)
         SUM += -1.3816e-7 * (pow(10, (11.344 * (1 - 1 / A0))) - 1)
         SUM += 8.1328e-3 * (pow(10, (-3.49149 * (A0 - 1))) - 1)
-        SUM += math.log(1013.246, 10)
+        SUM += math.log(self.get_pressure_hpa(), 10)
         VP = pow(10, SUM - 3) * self._humidity
         Td = math.log(VP / 0.61078)
         Td = (241.88 * Td) / (17.558 - Td)
@@ -899,7 +936,7 @@ class DeviceThermalComfort:
     @compute_once_lock(SensorType.MOIST_AIR_ENTHALPY)
     async def moist_air_enthalpy(self) -> float:
         """Calculate the enthalpy of moist air."""
-        patm = 101325  # standard pressure at sea-level
+        patm = self.get_pressure_pa()
         c_to_k = 273.15
 
         # ASHRAE fundamentals 2021 pg 1.5

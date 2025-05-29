@@ -1,6 +1,7 @@
 """Test Thermal Comfort config flow."""
 
 import json
+import logging
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -8,12 +9,16 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.thermal_comfort.config_flow import CONF_HUMIDITY_SENSOR, CONF_TEMPERATURE_SENSOR
 from custom_components.thermal_comfort.const import DOMAIN
+from custom_components.thermal_comfort.sensor import CONF_PRESSURE_SENSOR
 from homeassistant import config_entries
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import CONF_NAME
 from homeassistant.data_entry_flow import FlowResultType
 
 from .const import ADVANCED_USER_INPUT, USER_INPUT
 from .test_sensor import DEFAULT_TEST_SENSORS
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @pytest.fixture(autouse=True)
@@ -138,11 +143,29 @@ async def test_config_flow_non_existing_sensors(hass, start_ha):
     invalid_input[CONF_TEMPERATURE_SENSOR] = "sensor.non_existent"
     result = await _flow_configure(hass, result, invalid_input)
     assert result["type"] == FlowResultType.FORM
-    assert result["errors"] == {"temperature": "temperature_not_found"}
+    assert result["errors"] == {CONF_TEMPERATURE_SENSOR: "temperature_not_found"}
 
     # Test non-existent humidity sensor
     invalid_input[CONF_TEMPERATURE_SENSOR] = "sensor.test_temperature_sensor"
     invalid_input[CONF_HUMIDITY_SENSOR] = "sensor.non_existent"
     result = await _flow_configure(hass, result, invalid_input)
     assert result["type"] == FlowResultType.FORM
-    assert result["errors"] == {"humidity": "humidity_not_found"}
+    assert result["errors"] == {CONF_HUMIDITY_SENSOR: "humidity_not_found"}
+
+
+@pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
+async def test_config_flow_with_pressure_sensor(hass, start_ha):
+    """Test config flow with pressure sensor."""
+    hass.states.async_set(
+        "sensor.test_pressure_sensor", "1013.25", {"device_class": SensorDeviceClass.PRESSURE, "state_class": "measurement", "unit_of_measurement": "hPa"}
+    )
+    await hass.async_block_till_done()
+
+    result = await _flow_init(hass)
+    assert result["type"] == FlowResultType.FORM
+
+    input_with_pressure = ADVANCED_USER_INPUT.copy()
+    input_with_pressure[CONF_PRESSURE_SENSOR] = "sensor.test_pressure_sensor"
+    result = await _flow_configure(hass, result, input_with_pressure)
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    assert result["data"][CONF_PRESSURE_SENSOR] == "sensor.test_pressure_sensor"

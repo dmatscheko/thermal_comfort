@@ -21,6 +21,7 @@ from .sensor import (
     CONF_ENABLED_SENSORS,
     CONF_HUMIDITY_SENSOR,
     CONF_POLL,
+    CONF_PRESSURE_SENSOR,
     CONF_SCAN_INTERVAL,
     CONF_TEMPERATURE_SENSOR,
     POLL_DEFAULT,
@@ -362,6 +363,9 @@ def build_schema(
                 CONF_HUMIDITY_SENSOR,
                 default=get_value(config_entry, CONF_HUMIDITY_SENSOR, humidity_sensors[0] if humidity_sensors else None),
             ): selector({"entity": {"filter": {"device_class": SensorDeviceClass.HUMIDITY}}}),
+            vol.Optional(
+                CONF_PRESSURE_SENSOR,
+            ): selector({"entity": {"filter": {"device_class": SensorDeviceClass.PRESSURE}}}),
         },
     )
     if show_advanced:
@@ -407,21 +411,32 @@ def check_input(hass: HomeAssistant, user_input: dict) -> dict:
     t_entity_id = user_input[CONF_TEMPERATURE_SENSOR]
     t_state = hass.states.get(t_entity_id)
     if t_state is None:
-        errors["temperature"] = "temperature_not_found"
+        errors[CONF_TEMPERATURE_SENSOR] = "temperature_not_found"
     elif t_state.attributes.get("device_class") != SensorDeviceClass.TEMPERATURE:
-        errors["temperature"] = "temperature_not_found"
+        errors[CONF_TEMPERATURE_SENSOR] = "temperature_not_found"
     elif t_state.attributes.get("state_class") != "measurement":
-        errors["temperature"] = "temperature_not_found"
+        errors[CONF_TEMPERATURE_SENSOR] = "temperature_not_found"
 
     # Validate humidity sensor
     h_entity_id = user_input[CONF_HUMIDITY_SENSOR]
     h_state = hass.states.get(h_entity_id)
     if h_state is None:
-        errors["humidity"] = "humidity_not_found"
+        errors[CONF_HUMIDITY_SENSOR] = "humidity_not_found"
     elif h_state.attributes.get("device_class") != SensorDeviceClass.HUMIDITY:
-        errors["humidity"] = "humidity_not_found"
+        errors[CONF_HUMIDITY_SENSOR] = "humidity_not_found"
     elif h_state.attributes.get("state_class") != "measurement":
-        errors["humidity"] = "humidity_not_found"
+        errors[CONF_HUMIDITY_SENSOR] = "humidity_not_found"
+
+    # Validate optional pressure sensor
+    p_entity_id = user_input.get(CONF_PRESSURE_SENSOR)
+    if p_entity_id:  # Only validate if explicitly provided and non-empty
+        p_state = hass.states.get(p_entity_id)
+        if p_state is None:
+            errors[CONF_PRESSURE_SENSOR] = "pressure_not_found"
+        elif p_state.attributes.get("device_class") != SensorDeviceClass.PRESSURE:
+            errors[CONF_PRESSURE_SENSOR] = "pressure_not_found"
+        elif p_state.attributes.get("state_class") != "measurement":
+            errors[CONF_PRESSURE_SENSOR] = "pressure_not_found"
 
     return errors
 
