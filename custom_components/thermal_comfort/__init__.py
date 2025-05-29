@@ -18,7 +18,7 @@ from homeassistant.helpers.service import async_register_admin_service
 from homeassistant.helpers.typing import ConfigType
 
 from .config_flow import get_value
-from .const import DOMAIN, PLATFORMS, UPDATE_LISTENER
+from .const import COMPUTE_DEVICE, DOMAIN, PLATFORMS, UPDATE_LISTENER
 from .sensor import (
     CONF_CUSTOM_ICONS,
     CONF_ENABLED_SENSORS,
@@ -71,9 +71,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Remove entry via user interface."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        update_listener = hass.data[DOMAIN][entry.entry_id][UPDATE_LISTENER]
-        update_listener()
-        hass.data[DOMAIN].pop(entry.entry_id)
+        if entry.entry_id in hass.data[DOMAIN]:
+            update_listener = hass.data[DOMAIN][entry.entry_id].get(UPDATE_LISTENER)
+            if update_listener:
+                update_listener()
+            compute_device = hass.data[DOMAIN][entry.entry_id].get(COMPUTE_DEVICE)
+            if compute_device:
+                compute_device.cleanup()
+            hass.data[DOMAIN].pop(entry.entry_id)
+    else:
+        _LOGGER.error("Failed to unload platforms for entry: %s", entry.entry_id)
     return unload_ok
 
 

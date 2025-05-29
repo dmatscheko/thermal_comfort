@@ -356,24 +356,12 @@ def build_schema(
             vol.Required(CONF_NAME, default=get_value(config_entry, CONF_NAME, DEFAULT_NAME)): str,
             vol.Required(
                 CONF_TEMPERATURE_SENSOR,
-                default=get_value(config_entry, CONF_TEMPERATURE_SENSOR, temperature_sensors[0]),
-            ): selector(
-                {
-                    "entity": {
-                        "include_entities": temperature_sensors,
-                    }
-                }
-            ),
+                default=get_value(config_entry, CONF_TEMPERATURE_SENSOR, temperature_sensors[0] if temperature_sensors else None),
+            ): selector({"entity": {"filter": {"device_class": SensorDeviceClass.TEMPERATURE}}}),
             vol.Required(
                 CONF_HUMIDITY_SENSOR,
-                default=get_value(config_entry, CONF_HUMIDITY_SENSOR, humidity_sensors[0]),
-            ): selector(
-                {
-                    "entity": {
-                        "include_entities": humidity_sensors,
-                    }
-                }
-            ),
+                default=get_value(config_entry, CONF_HUMIDITY_SENSOR, humidity_sensors[0] if humidity_sensors else None),
+            ): selector({"entity": {"filter": {"device_class": SensorDeviceClass.HUMIDITY}}}),
         },
     )
     if show_advanced:
@@ -408,26 +396,34 @@ def check_input(hass: HomeAssistant, user_input: dict) -> dict:
 
     :param hass: hass instance
     :param user_input: user input
-    :returns: dict with error.
+    :returns: dict with errors.
     """
 
     # ToDo: user_input have ConfigType type, but it in codebase since 2021.12.10
 
-    result = {}
+    errors = {}
 
-    t_sensor = hass.states.get(user_input[CONF_TEMPERATURE_SENSOR])
-    p_sensor = hass.states.get(user_input[CONF_HUMIDITY_SENSOR])
+    # Validate temperature sensor
+    t_entity_id = user_input[CONF_TEMPERATURE_SENSOR]
+    t_state = hass.states.get(t_entity_id)
+    if t_state is None:
+        errors["temperature"] = "temperature_not_found"
+    elif t_state.attributes.get("device_class") != SensorDeviceClass.TEMPERATURE:
+        errors["temperature"] = "temperature_not_found"
+    elif t_state.attributes.get("state_class") != "measurement":
+        errors["temperature"] = "temperature_not_found"
 
-    if t_sensor is None:
-        result["base"] = "temperature_not_found"
+    # Validate humidity sensor
+    h_entity_id = user_input[CONF_HUMIDITY_SENSOR]
+    h_state = hass.states.get(h_entity_id)
+    if h_state is None:
+        errors["humidity"] = "humidity_not_found"
+    elif h_state.attributes.get("device_class") != SensorDeviceClass.HUMIDITY:
+        errors["humidity"] = "humidity_not_found"
+    elif h_state.attributes.get("state_class") != "measurement":
+        errors["humidity"] = "humidity_not_found"
 
-    if p_sensor is None:
-        result["base"] = "humidity_not_found"
-
-    # ToDo: we should not trust user and check:
-    #  - that CONF_TEMPERATURE_SENSOR is temperature sensor and have state_class measurement
-    #  - that CONF_HUMIDITY_SENSOR is humidity sensor and have state_class measurement
-    return result
+    return errors
 
 
 class ThermalComfortConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):

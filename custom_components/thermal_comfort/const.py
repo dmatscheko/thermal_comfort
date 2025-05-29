@@ -10,3 +10,4 @@ CONF_POLL = "poll"
 
 DEFAULT_NAME = "Thermal Comfort"
 UPDATE_LISTENER = "update_listener"
+COMPUTE_DEVICE = "compute_device"

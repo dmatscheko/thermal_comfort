@@ -37,7 +37,7 @@ from homeassistant.helpers.template import Template
 from homeassistant.loader import async_get_custom_components
 from homeassistant.util.unit_conversion import TemperatureConverter
 
-from .const import DEFAULT_NAME, DOMAIN
+from .const import COMPUTE_DEVICE, DEFAULT_NAME, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -410,6 +410,8 @@ async def async_setup_entry(
         scan_interval=timedelta(seconds=data.get(CONF_SCAN_INTERVAL, SCAN_INTERVAL_DEFAULT)),
     )
 
+    hass.data[DOMAIN][config_entry.entry_id][COMPUTE_DEVICE] = compute_device
+
     entities: list[SensorThermalComfort] = [
         SensorThermalComfort(
             device=compute_device,
@@ -582,10 +584,11 @@ class DeviceThermalComfort:
         self._should_poll = should_poll
         self.sensors = []
         self._compute_states = {sensor_type: ComputeState(lock=Lock()) for sensor_type in SENSOR_TYPES}
+        self._timer_remove = None
+        self._state_listeners = []
 
-        async_track_state_change_event(self.hass, self._temperature_entity, self.temperature_state_listener)
-
-        async_track_state_change_event(self.hass, self._humidity_entity, self.humidity_state_listener)
+        self._state_listeners.append(async_track_state_change_event(self.hass, self._temperature_entity, self.temperature_state_listener))
+        self._state_listeners.append(async_track_state_change_event(self.hass, self._humidity_entity, self.humidity_state_listener))
 
         hass.async_create_task(self._new_temperature_state(hass.states.get(temperature_entity)))
         hass.async_create_task(self._new_humidity_state(hass.states.get(humidity_entity)))
@@ -595,11 +598,29 @@ class DeviceThermalComfort:
         if self._should_poll:
             if scan_interval is None:
                 scan_interval = timedelta(seconds=SCAN_INTERVAL_DEFAULT)
-            async_track_time_interval(
+            self._timer_remove = async_track_time_interval(
                 self.hass,
                 self.async_update_sensors,
                 scan_interval,
             )
+
+    def cancel_timer(self):
+        """Cancel the polling timer if it exists."""
+        if self._timer_remove is not None:
+            self._timer_remove()  # Call the remove function
+            self._timer_remove = None
+
+    def cancel_listeners(self):
+        """Cancel all state change listeners."""
+        for listener in self._state_listeners:
+            if callable(listener):
+                listener()
+        self._state_listeners.clear()
+
+    def cleanup(self):
+        """Perform all cleanup actions."""
+        self.cancel_timer()
+        self.cancel_listeners()
 
     async def _set_version(self):
         self._device_info["sw_version"] = (await async_get_custom_components(self.hass))[DOMAIN].version.string

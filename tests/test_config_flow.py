@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.thermal_comfort.config_flow import CONF_HUMIDITY_SENSOR, CONF_TEMPERATURE_SENSOR
 from custom_components.thermal_comfort.const import DOMAIN
 from homeassistant import config_entries
 from homeassistant.const import CONF_NAME
@@ -111,20 +112,37 @@ async def test_config_flow_enabled():
         assert manifest.get("config_flow") is True
 
 
-# @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
-# @pytest.mark.parametrize("sensor", [CONF_TEMPERATURE_SENSOR, CONF_HUMIDITY_SENSOR])
-# async def test_missed_sensors(hass, sensor, start_ha):
-#    """Test is we show message if sensor missed."""
-#
-#    result = await _flow_init(hass)
-#
-#    # Check that the config flow shows the user form as the first step
-#    assert result["type"] == FlowResultType.FORM
-#    assert result["step_id"] == "user"
-#
-#    no_sensor = dict(ADVANCED_USER_INPUT)
-#    no_sensor[sensor] = "foo"
-#    with pytest.raises(vol.error.MultipleInvalid):
-#        result = await _flow_configure(hass, result, no_sensor)
-#
-#    assert result["type"] == FlowResultType.FORM
+@pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
+async def test_config_flow_missing_sensors(hass, start_ha):
+    """Test config flow when sensors are missing."""
+    # Mock no sensors available
+    with patch(
+        "custom_components.thermal_comfort.config_flow.get_sensors_by_device_class",
+        return_value=[],
+    ):
+        result = await _flow_init(hass, advanced_options=False)
+        assert result["type"] == FlowResultType.ABORT
+        assert result["reason"] == "no_sensors"
+
+        result = await _flow_init(hass, advanced_options=True)
+        assert result["type"] == FlowResultType.ABORT
+        assert result["reason"] == "no_sensors_advanced"
+
+
+@pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
+async def test_config_flow_non_existing_sensors(hass, start_ha):
+    """Test config flow when given sensors are not existing."""
+    # Test non-existent temperature sensor
+    result = await _flow_init(hass)
+    invalid_input = dict(ADVANCED_USER_INPUT)
+    invalid_input[CONF_TEMPERATURE_SENSOR] = "sensor.non_existent"
+    result = await _flow_configure(hass, result, invalid_input)
+    assert result["type"] == FlowResultType.FORM
+    assert result["errors"] == {"temperature": "temperature_not_found"}
+
+    # Test non-existent humidity sensor
+    invalid_input[CONF_TEMPERATURE_SENSOR] = "sensor.test_temperature_sensor"
+    invalid_input[CONF_HUMIDITY_SENSOR] = "sensor.non_existent"
+    result = await _flow_configure(hass, result, invalid_input)
+    assert result["type"] == FlowResultType.FORM
+    assert result["errors"] == {"humidity": "humidity_not_found"}

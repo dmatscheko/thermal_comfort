@@ -1,6 +1,7 @@
 """Test the Thermal Comfort sensor platform."""
 
 from collections.abc import Callable
+from datetime import timedelta
 import logging
 
 import pytest
@@ -15,8 +16,12 @@ from custom_components.thermal_comfort.sensor import (
     ATTR_THOMS_DISCOMFORT_INDEX,
     ATTR_WINTER_SCHARLAU_INDEX,
     CONF_CUSTOM_ICONS,
+    CONF_POLL,
+    CONF_SCAN_INTERVAL,
     CONF_SENSOR_TYPES,
     DEFAULT_SENSOR_TYPES,
+    SENSOR_TYPES,
+    STATE_UNAVAILABLE,
     DewPointPerception,
     FrostRisk,
     HumidexPerception,
@@ -28,9 +33,9 @@ from custom_components.thermal_comfort.sensor import (
     id_generator,
 )
 from homeassistant.components.command_line.const import DOMAIN as COMMAND_LINE_DOMAIN
-from homeassistant.components.sensor import DOMAIN as PLATFORM_DOMAIN
+from homeassistant.components.sensor import DOMAIN as PLATFORM_DOMAIN, SensorDeviceClass
 from homeassistant.const import ATTR_TEMPERATURE
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers import entity_registry as er
 
 from .const import ADVANCED_USER_INPUT
@@ -44,6 +49,10 @@ TEMPERATURE_TEST_SENSOR = {
         "command": "echo 0",
         "name": "test_temperature_sensor",
         "value_template": "{{ 25.0 | float }}",
+        "scan_interval": 3600,  # Set to 1 hour to minimize polling
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": "measurement",
+        "unit_of_measurement": "°C",
     },
 }
 
@@ -52,6 +61,10 @@ HUMIDITY_TEST_SENSOR = {
         "command": "echo 0",
         "name": "test_humidity_sensor",
         "value_template": "{{ 50.0 | float }}",
+        "scan_interval": 3600,  # Set to 1 hour to minimize polling
+        "device_class": SensorDeviceClass.HUMIDITY,
+        "state_class": "measurement",
+        "unit_of_measurement": "%",
     },
 }
 
@@ -81,9 +94,19 @@ DEFAULT_TEST_SENSORS = [
 LEN_DEFAULT_SENSORS = len(DEFAULT_SENSOR_TYPES)
 
 
-def get_sensor(hass, sensor_type: SensorType) -> str:
-    """Get test sensor id."""
+def get_sensor(hass, sensor_type: SensorType) -> State | None:
+    """Get test sensor state."""
     return hass.states.get(f"{TEST_NAME}_{sensor_type}")
+
+
+# # maybe better than get_sensor
+# def get_sensor_by_unique_id(hass, sensor_type: SensorType) -> State | None:
+#     """Get test sensor state by unique ID."""
+#     registry = er.async_get(hass)
+#     # Use lowercase sensor_type to match unique ID format
+#     unique_id = f"unique_thermal_comfort_id{sensor_type.value.lower()}"
+#     entity_id = registry.async_get_entity_id("sensor", DOMAIN, unique_id)
+#     return hass.states.get(entity_id)
 
 
 @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
@@ -874,3 +897,183 @@ async def test_global_options(hass: HomeAssistant, start_ha: Callable) -> None:
     """Test if global options are correctly set."""
     assert len(hass.states.async_all(PLATFORM_DOMAIN)) == 3
     assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).attributes["icon"] == "tc:thermal-perception"
+
+
+@pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
+async def test_invalid_sensor_states(hass, start_ha):
+    """Test handling of invalid sensor states."""
+    # Test non-numeric temperature
+    hass.states.async_set("sensor.test_temperature_sensor", "invalid")
+    await hass.async_block_till_done()
+    for sensor_type in DEFAULT_SENSOR_TYPES:
+        assert get_sensor(hass, sensor_type).state is None, f"{sensor_type} should be None for invalid temperature"
+
+    # Test out-of-range humidity
+    hass.states.async_set("sensor.test_temperature_sensor", "25.0")
+    hass.states.async_set("sensor.test_humidity_sensor", "150.0")
+    await hass.async_block_till_done()
+    for sensor_type in DEFAULT_SENSOR_TYPES:
+        assert get_sensor(hass, sensor_type).state is None, f"{sensor_type} should be None for invalid humidity"
+
+    # Test both sensors unavailable
+    hass.states.async_set("sensor.test_temperature_sensor", STATE_UNAVAILABLE)
+    hass.states.async_set("sensor.test_humidity_sensor", STATE_UNAVAILABLE)
+    await hass.async_block_till_done()
+    for sensor_type in DEFAULT_SENSOR_TYPES:
+        assert get_sensor(hass, sensor_type).state is None, f"{sensor_type} should be None when both sensors are unavailable"
+
+
+@pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
+async def test_edge_case_values(hass, start_ha):
+    """Test calculations at edge case temperature and humidity values."""
+    # Test minimum temperature
+    hass.states.async_set("sensor.test_temperature_sensor", "-150.0")
+    hass.states.async_set("sensor.test_humidity_sensor", "50.0")
+    await hass.async_block_till_done()
+    assert get_sensor(hass, SensorType.DEW_POINT).state is not None, "Dew point should be calculated for min temp"
+    assert get_sensor(hass, SensorType.ABSOLUTE_HUMIDITY).state is not None, "Absolute humidity should be calculated"
+
+    # Test maximum temperature
+    hass.states.async_set("sensor.test_temperature_sensor", "150.0")
+    await hass.async_block_till_done()
+    assert get_sensor(hass, SensorType.HEAT_INDEX).state is not None, "Heat index should be calculated for max temp"
+    assert get_sensor(hass, SensorType.HUMIDEX).state is not None, "Humidex should be calculated"
+
+    # Test 0% humidity
+    hass.states.async_set("sensor.test_temperature_sensor", "25.0")
+    hass.states.async_set("sensor.test_humidity_sensor", "0.0")
+    await hass.async_block_till_done()
+    dew_point_state = get_sensor(hass, SensorType.DEW_POINT).state
+    assert dew_point_state is None, f"Dew point should be None for 0% humidity, but is {dew_point_state}"
+
+    # Test 100% humidity
+    hass.states.async_set("sensor.test_humidity_sensor", "100.0")
+    await hass.async_block_till_done()
+    assert get_sensor(hass, SensorType.DEW_POINT).state is not None, "Dew point should be calculated for 100% humidity"
+
+
+@pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
+async def test_polling_behavior(hass: HomeAssistant, start_ha, caplog, freezer):
+    """Test polling behavior with and without polling enabled."""
+    # Set initial sensor states to avoid 25.0 default
+    hass.states.async_set("sensor.test_temperature_sensor", "26.0")
+    hass.states.async_set("sensor.test_humidity_sensor", "50.0")
+    await hass.async_block_till_done()
+
+    # Set up config entry with polling enabled
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={**ADVANCED_USER_INPUT, CONF_POLL: True, CONF_SCAN_INTERVAL: 5},
+        entry_id="test",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    # Enable entities to avoid disabled state
+    registry = er.async_get(hass)
+    for sensor_type in SENSOR_TYPES:
+        unique_id = f"unique_thermal_comfort_id{sensor_type.value.lower()}"
+        entity_id = registry.async_get_entity_id("sensor", DOMAIN, unique_id)
+        if entity_id:
+            registry.async_update_entity(entity_id, disabled_by=None)
+    await hass.async_block_till_done()
+
+    # Verify initial state
+    temp = get_sensor(hass, SensorType.DEW_POINT).attributes[ATTR_TEMPERATURE]
+    assert temp == 26.0, (
+        f"Polling enabled - initial state. Expected dew point temperature to be 26.0, got {temp}. "
+        f"Temperature sensor: {hass.states.get('sensor.test_temperature_sensor').state}, "
+        f"Humidity sensor: {hass.states.get('sensor.test_humidity_sensor').state}"
+    )
+
+    # Change sensor value and advance time for polling update
+    hass.states.async_set("sensor.test_temperature_sensor", "27.0")
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(seconds=3700))  # Exceed scan_interval
+    await hass.async_block_till_done()
+    temp = get_sensor(hass, SensorType.DEW_POINT).attributes[ATTR_TEMPERATURE]
+    assert temp == 27.0, (
+        f"Polling enabled - after sensor update. Expected dew point temperature to be 27.0, got {temp}. "
+        f"Temperature sensor: {hass.states.get('sensor.test_temperature_sensor').state}, "
+        f"Humidity sensor: {hass.states.get('sensor.test_humidity_sensor').state}"
+    )
+
+    # Unload polling config entry
+    await hass.config_entries.async_unload(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    # Set up new config entry with polling disabled
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={**ADVANCED_USER_INPUT, CONF_POLL: False, CONF_SCAN_INTERVAL: 30},
+        entry_id="test2",
+    )
+    config_entry.add_to_hass(hass)
+    hass.states.async_set("sensor.test_temperature_sensor", "26.0")
+    hass.states.async_set("sensor.test_humidity_sensor", "50.0")
+    await hass.async_block_till_done()
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    # Enable entities for non-polling setup
+    for sensor_type in SENSOR_TYPES:
+        unique_id = f"unique_thermal_comfort_id{sensor_type.value.lower()}"
+        entity_id = registry.async_get_entity_id("sensor", DOMAIN, unique_id)
+        if entity_id:
+            registry.async_update_entity(entity_id, disabled_by=None)
+    await hass.async_block_till_done()
+
+    # Verify initial state
+    temp = get_sensor(hass, SensorType.DEW_POINT).attributes[ATTR_TEMPERATURE]
+    assert temp == 26.0, (
+        f"Polling disabled - initial state. Expected dew point temperature to be 26.0, got {temp}. "
+        f"Temperature sensor: {hass.states.get('sensor.test_temperature_sensor').state}, "
+        f"Humidity sensor: {hass.states.get('sensor.test_humidity_sensor').state}"
+    )
+
+    # Change sensor value; expect no update
+    hass.states.async_set("sensor.test_temperature_sensor", "27.0")
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(seconds=3700))  # Match polling test duration
+    await hass.async_block_till_done()
+    temp = get_sensor(hass, SensorType.DEW_POINT).attributes[ATTR_TEMPERATURE]
+    assert temp == 26.0, (
+        f"Polling disabled - after sensor change. Expected dew point temperature to be 26.0, got {temp}. "
+        f"Temperature sensor: {hass.states.get('sensor.test_temperature_sensor').state}, "
+        f"Humidity sensor: {hass.states.get('sensor.test_humidity_sensor').state}"
+    )
+
+    # Unload the entry
+    await hass.config_entries.async_unload(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+
+# @pytest.mark.parametrize(*DEFAULT_TEST_SENSORS)
+# async def test_custom_icons(hass, start_ha):
+#     """Test custom icon functionality."""
+#     # Enable custom icons
+#     config_entry = MockConfigEntry(
+#         domain=DOMAIN,
+#         data={**ADVANCED_USER_INPUT, CONF_CUSTOM_ICONS: True},
+#         entry_id="test",
+#     )
+#     config_entry.add_to_hass(hass)
+#     await hass.config_entries.async_setup(config_entry.entry_id)
+#     await hass.async_block_till_done()
+
+#     assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).attributes["icon"] == "tc:thermal-perception"
+#     assert get_sensor(hass, SensorType.ABSOLUTE_HUMIDITY).attributes["icon"] == "mdi:water"
+
+#     # Disable custom icons
+#     config_entry = MockConfigEntry(
+#         domain=DOMAIN,
+#         data={**ADVANCED_USER_INPUT, CONF_CUSTOM_ICONS: False},
+#         entry_id="test2",
+#     )
+#     config_entry.add_to_hass(hass)
+#     await hass.config_entries.async_setup(config_entry.entry_id)
+#     await hass.async_block_till_done()
+
+#     assert get_sensor(hass, SensorType.DEW_POINT_PERCEPTION).attributes["icon"] == "mdi:sun-thermometer"
+#     assert get_sensor(hass, SensorType.ABSOLUTE_HUMIDITY).attributes["icon"] == "mdi:water"
