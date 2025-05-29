@@ -713,7 +713,7 @@ class DeviceThermalComfort:
         return TemperatureConverter.convert(hi, UnitOfTemperature.FAHRENHEIT, UnitOfTemperature.CELSIUS)
 
     @compute_once_lock(SensorType.HUMIDEX)
-    async def humidex(self) -> int:
+    async def humidex(self) -> float:
         """<https://simple.wikipedia.org/wiki/Humidex#Humidex_formula>."""
         dewpoint = await self.dew_point()
         e = 6.11 * math.exp(5417.7530 * ((1 / 273.16) - (1 / (dewpoint + 273.15))))
